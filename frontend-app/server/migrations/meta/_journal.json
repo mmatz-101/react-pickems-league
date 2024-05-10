@@ -15,6 +15,48 @@
       "when": 1715222852294,
       "tag": "0001_fresh_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1715271319768,
+      "tag": "0002_clear_pet_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1715276587774,
+      "tag": "0003_fearless_garia",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1715276676220,
+      "tag": "0004_premium_thunderbolt_ross",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1715277481201,
+      "tag": "0005_bright_ender_wiggin",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1715278445556,
+      "tag": "0006_messy_millenium_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1715278519877,
+      "tag": "0007_high_fixer",
+      "breakpoints": true
     }
   ]
 }

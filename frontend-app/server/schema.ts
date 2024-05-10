@@ -4,6 +4,8 @@ import {
     text,
     primaryKey,
     integer,
+    boolean,
+    pgEnum,
   } from "drizzle-orm/pg-core"
   import postgres from "postgres"
   import { drizzle } from "drizzle-orm/postgres-js"
@@ -13,6 +15,8 @@ import {
   const pool = postgres(connectionString, { max: 1 })
    
   export const db = drizzle(pool)
+  
+  export const RoleEnum = pgEnum("roles", ["user", "admin"])
    
   export const users = pgTable("user", {
     id: text("id")
@@ -22,6 +26,9 @@ import {
     email: text("email").notNull(),
     emailVerified: timestamp("emailVerified", { mode: "date" }),
     image: text("image"),
+    password: text("password"),
+    twoFactorEnabled: boolean("twoFactorEnabled").default(false),
+    role: RoleEnum("roles").default("user"),
   })
    
   export const accounts = pgTable(
@@ -45,5 +52,18 @@ import {
       compoundKey: primaryKey({
         columns: [account.provider, account.providerAccountId],
       }),
+    })
+  )
+
+  export const emailTokens = pgTable(
+    "email_tokens",
+    {
+      id: text("id").notNull(),
+      token: text("token").notNull(),
+      expires: timestamp("expires", { mode: "date" }).notNull(),
+      email: text("email").notNull(),
+    },
+    (vt) => ({
+      compoundKey: primaryKey({ columns: [vt.id, vt.token] }),
     })
   )
