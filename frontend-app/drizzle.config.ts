@@ -8,8 +8,8 @@ dotenv.config({
 export default {
   schema: './server/schema.ts',
   out: './server/migrations',
-  driver: 'pg', // 'pg' | 'mysql2' | 'better-sqlite' | 'libsql' | 'turso'
+  dialect: 'postgresql',
   dbCredentials: {
-    connectionString: process.env.POSTGRES_URL!,
+    url: process.env.POSTGRES_URL!,
   },
 } satisfies Config;

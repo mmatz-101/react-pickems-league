@@ -40,7 +40,7 @@ export const emailSignIn = action(
       if (error instanceof AuthError){
         switch(error.type){
           case "CredentialsSignin":
-            return { error: "Invalid credentials" };
+            return { error: "Email or Password Incorrect" };
           default:
             return { error: "An error occurred" };
         }

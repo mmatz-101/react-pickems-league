@@ -57,6 +57,13 @@
       "when": 1715278519877,
       "tag": "0007_high_fixer",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1715352416923,
+      "tag": "0008_remarkable_wolf_cub",
+      "breakpoints": true
     }
   ]
 }

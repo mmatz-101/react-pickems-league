@@ -3,7 +3,7 @@
 import { db } from "@/server"
 import {users} from "@/server/schema"
 import { eq } from "drizzle-orm"
-import { emailTokens } from "../schema"
+import { emailTokens, passwordResetTokens } from "../schema"
 
 export const getVerificationTokenByEmail = async(email: string) => {
     try {
@@ -26,7 +26,7 @@ export const generateEmailVerificationToken = async(email: string) => {
     }
 
     const verificationToken = await db.insert(emailTokens).values({
-        id: crypto.randomUUID(), // assuming you're using UUIDs for your ids
+        id: crypto.randomUUID(), 
         email,
         token,
         expires,
@@ -64,4 +64,50 @@ export const newVerification = async (token:string) => {
     await db.delete(emailTokens).where(eq(emailTokens.id, existingToken.id))
 
     return {success: "Email verified"}
+}
+
+export const getPasswordResetTokenByToken = async(token: string) =>{
+    try {
+
+    const passwordResetToken = await db.query.passwordResetTokens.findFirst({
+        where: eq(passwordResetTokens.token, token)
+    })
+    return passwordResetToken
+    } catch(error){
+        return null
+
+    }
+}
+
+export const getPasswordResetTokenByEmail = async(email: string) => {
+    try {
+        const passwordResetToken = await db.query.passwordResetTokens.findFirst({
+            where: eq(passwordResetTokens.email, email)
+        })
+        return passwordResetToken
+    } catch (error) {
+        return null
+    }
+}
+
+export const generatePasswordResetToken = async(email: string) => {
+    try {
+
+    const token = crypto.randomUUID()
+    const expires = new Date(new Date().getTime() + 1000 * 60 * 60 * 24)
+    const existingToken = await getPasswordResetTokenByEmail(email)
+
+    if (existingToken) {
+        await db.delete(passwordResetTokens).where(eq(passwordResetTokens.id, existingToken.id))
+    }
+    const passwordResetToken = await db.insert(passwordResetTokens).values({
+        id: crypto.randomUUID(),
+        email,
+        token,
+        expires,
+    }).returning()
+    return passwordResetToken
+    } catch (error) {
+        return null
+    }
 }
