@@ -6,12 +6,17 @@ import { createSafeActionClient } from "next-safe-action";
 import { passwordResetTokens, users } from "../schema";
 import { db } from "@/server";
 import { getPasswordResetTokenByToken } from "./tokens";
+import { Pool } from "@neondatabase/serverless";
 import bcrypt from "bcrypt";
+import { drizzle } from "drizzle-orm/neon-serverless";
 
 const action = createSafeActionClient();
 export const newPassword = action(
   NewPasswordSchema,
   async ({ password, token }) => {
+    const pool =  new Pool({connectionString: process.env.POSTGRES_URL});
+    const dbpool = drizzle(pool);
+
     if (!token) {
       return { error: "Token is required" };
     }
@@ -19,7 +24,7 @@ export const newPassword = action(
     const existingToken = await getPasswordResetTokenByToken(token);
 
     if (!existingToken) {
-      return { error: "Token not found" };
+      return { error: "Token not found. Double check your email for a more recent password reset." };
     }
 
     if (new Date(existingToken.expires) < new Date()) {
@@ -36,8 +41,9 @@ export const newPassword = action(
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    try {
     // database transaction
-    await db.transaction(async (tx) => {
+    await dbpool.transaction(async (tx) => {
       // update user password with hashed password
       await tx
         .update(users)
@@ -50,6 +56,10 @@ export const newPassword = action(
         .delete(passwordResetTokens)
         .where(eq(passwordResetTokens.id, existingToken.id));
     });
+
+    } catch (error) {
+      return { error: "Unable to update password. Database error." };
+    }
 
     return {success: "Password updated"}
   }
