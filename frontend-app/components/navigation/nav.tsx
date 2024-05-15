@@ -14,7 +14,13 @@ export default async function Nav() {
         <ul className="flex justify-between items-center px-4">
           <li>
             <Link href={"/"} aria-label="pickems logo">
-              <Image src="logo_light.svg" alt="Logo" width={100} height={100} priority={true} />
+              <Image
+                src="/logo_light.svg"
+                alt="Logo"
+                width={100}
+                height={100}
+                priority={true}
+              />
             </Link>
           </li>
           {!session ? (
