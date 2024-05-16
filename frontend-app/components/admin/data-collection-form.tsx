@@ -30,7 +30,7 @@ import { useAction } from "next-safe-action/hooks";
 import { DataCollection } from "@/server/actions/admin/data-collection";
 import { cn } from "@/lib/utils";
 
-export default function Component() {
+export default function DataCollectionForm() {
   const form = useForm<z.infer<typeof DataCollectionSchema>>({
     resolver: zodResolver(DataCollectionSchema),
     defaultValues: {},

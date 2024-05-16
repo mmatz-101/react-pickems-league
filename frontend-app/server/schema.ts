@@ -6,10 +6,14 @@ import {
     integer,
     boolean,
     pgEnum,
+    date,
+    decimal,
+    doublePrecision,
   } from "drizzle-orm/pg-core"
   import postgres from "postgres"
   import { drizzle } from "drizzle-orm/postgres-js"
   import type { AdapterAccount } from "next-auth/adapters"
+import { float } from "drizzle-orm/mysql-core"
    
   const connectionString = "postgres://postgres:postgres@localhost:5432/drizzle"
   const pool = postgres(connectionString, { max: 1 })
@@ -80,3 +84,22 @@ import {
       compoundKey: primaryKey({ columns: [vt.id, vt.token] }),
     })
   )
+
+  export const games = pgTable("games", {
+    id: text("id").primaryKey(),
+    league: text("league"),
+    year: integer("year"),
+    week: integer("week"),
+    date: date("date", { mode: "date"}),
+    status: text("status"),
+    tvStation: text("tvStation"),
+    homeTeam: text("homeTeam"),
+    homeSpread: doublePrecision("homeSpread"),
+    awayTeam: text("awayTeam"),
+    awaySpread: doublePrecision("awaySpread"), 
+  })
+
+  export const currentWeeks = pgTable("current_weeks", {
+    id: text("id").primaryKey().default("current_week"),
+    currentWeek: integer("currentWeek"),
+  })
