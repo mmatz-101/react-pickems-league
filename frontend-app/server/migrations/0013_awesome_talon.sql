@@ -1,0 +1,1 @@
+ALTER TABLE "current_weeks" ALTER COLUMN "currentWeek" SET NOT NULL;

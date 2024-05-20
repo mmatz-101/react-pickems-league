@@ -27,6 +27,7 @@ import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Switch } from "../ui/switch";
+import Link from "next/link";
 
 export const UserButton = ({ user }: Session) => {
   const { setTheme, theme } = useTheme();
@@ -87,10 +88,12 @@ export const UserButton = ({ user }: Session) => {
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem className="py-2 font-medium cursor-pointer ">
-              <User className="mr-2 h-4 w-4" />
-              <span>User Dashboard</span>
-            </DropdownMenuItem>
+            <Link href={`/${user.id}`}>
+              <DropdownMenuItem className="py-2 font-medium cursor-pointer">
+                <User className="mr-2 h-4 w-4" />
+                <span>User Dashboard</span>
+              </DropdownMenuItem>
+            </Link>
           </DropdownMenuGroup>
           <DropdownMenuGroup>
             <DropdownMenuItem className="py-2 font-medium cursor-pointer ">

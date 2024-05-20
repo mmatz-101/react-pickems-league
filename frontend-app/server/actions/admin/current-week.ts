@@ -1,3 +1,5 @@
+"use server"
+
 import { db } from "@/server";
 import { CurrentWeekSchema } from "@/types/current-week";
 import {currentWeeks } from "@/server/schema";

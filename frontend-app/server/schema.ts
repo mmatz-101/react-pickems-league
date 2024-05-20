@@ -101,5 +101,5 @@ import { float } from "drizzle-orm/mysql-core"
 
   export const currentWeeks = pgTable("current_weeks", {
     id: text("id").primaryKey().default("current_week"),
-    currentWeek: integer("currentWeek"),
+    currentWeek: integer("currentWeek").notNull(),
   })

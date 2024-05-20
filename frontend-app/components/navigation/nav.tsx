@@ -4,10 +4,10 @@ import Link from "next/link";
 import { LogIn } from "lucide-react";
 import Image from "next/image";
 import { auth } from "@/server/auth";
+import { useState } from "react";
 
 export default async function Nav() {
   const session = await auth();
-
   return (
     <header className="py-8">
       <nav>

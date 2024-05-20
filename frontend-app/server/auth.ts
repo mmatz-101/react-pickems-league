@@ -12,6 +12,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
   secret: process.env.AUTH_SECRET,
   session: { strategy: "jwt" },
+  callbacks: {
+    async jwt({token, account, user}){
+      if (account){
+        token.id = user.id
+      }
+      return token
+    },
+    async session({session, token}){
+      session.user.id = token.id as string;
+
+      return session
+    }
+  },
   providers: [
     google({
       clientId: process.env.GOOGLE_CLIENT_ID,

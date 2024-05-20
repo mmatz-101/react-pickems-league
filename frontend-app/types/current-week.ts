@@ -1,5 +1,5 @@
 import * as z from "zod";
 
 export const CurrentWeekSchema = z.object({
-    currentWeek: z.number(),
+    currentWeek: z.coerce.number(),
 })
