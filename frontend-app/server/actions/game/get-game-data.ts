@@ -1,7 +1,7 @@
 "use server";
 import { db } from "@/server";
 import { currentWeeks, games } from "@/server/schema";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 export async function getGameData() {
   try {
@@ -13,6 +13,7 @@ export async function getGameData() {
     }
     const gameData = await db.query.games.findMany({
       where: eq(games.week, currentWeek.currentWeek!),
+      orderBy: asc(games.date),
     });
 
     return { success: gameData };

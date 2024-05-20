@@ -12,7 +12,7 @@ export default async function PicksPage() {
       <SearchBar />
       <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 place-items-center gap-4 py-4">
         {gameData.success?.map((game) => (
-          <GameCard game={game} />
+          <GameCard game={game} key={game.id} />
         ))}
       </div>
     </>

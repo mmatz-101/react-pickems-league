@@ -7,13 +7,11 @@ import {
     boolean,
     pgEnum,
     date,
-    decimal,
     doublePrecision,
   } from "drizzle-orm/pg-core"
   import postgres from "postgres"
   import { drizzle } from "drizzle-orm/postgres-js"
   import type { AdapterAccount } from "next-auth/adapters"
-import { float } from "drizzle-orm/mysql-core"
    
   const connectionString = "postgres://postgres:postgres@localhost:5432/drizzle"
   const pool = postgres(connectionString, { max: 1 })
@@ -92,14 +90,28 @@ import { float } from "drizzle-orm/mysql-core"
     week: integer("week"),
     date: date("date", { mode: "date"}),
     status: text("status"),
-    tvStation: text("tvStation"),
-    homeTeam: text("homeTeam"),
-    homeSpread: doublePrecision("homeSpread"),
-    awayTeam: text("awayTeam"),
-    awaySpread: doublePrecision("awaySpread"), 
+    tvStation: text("tv_station"),
+    homeTeam: text("home_team"),
+    homeSpread: doublePrecision("home_spread"),
+    awayTeam: text("away_team"),
+    awaySpread: doublePrecision("away_spread"), 
   })
 
   export const currentWeeks = pgTable("current_weeks", {
     id: text("id").primaryKey().default("current_week"),
-    currentWeek: integer("currentWeek").notNull(),
+    currentWeek: integer("current_week").notNull(),
   })
+
+  export const team = pgEnum("team",["HOME", "AWAY"])
+  export const pickType = pgEnum("pick_type", ["REGULAR", "BINNY"])
+
+  export const picks = pgTable("pick", {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userID: text("user_id").references(() => users.id),
+    gameID: text("game_id").references(() => games.id),
+    team: team("team").notNull(),
+    pickType: pickType("pick_type").notNull(),
+    createdAt: date("created_at").defaultNow(),
+    updatedAt: date("updated_at").defaultNow(),
+  })
+
