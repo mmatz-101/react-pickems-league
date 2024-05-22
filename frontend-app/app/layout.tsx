@@ -5,6 +5,8 @@ import "./globals.css";
 import Nav from "@/components/navigation/nav";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { ClerkProvider, SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,6 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <ClerkProvider>
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn("px-6 md:px-12 max-w-7xl mx-auto", `${inter.className}`)}
@@ -30,5 +33,6 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
+</ClerkProvider>
   );
 }
