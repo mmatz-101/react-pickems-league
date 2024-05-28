@@ -10,12 +10,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { pb } from "@/lib/pocketbase";
 import { LoginSchema } from "@/schema/login-schema";
 import { LoginUser } from "@/server/actions/login-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAction } from "next-safe-action/hooks";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -28,12 +27,14 @@ export default function SignupPage() {
     },
   });
 
-  const { execute, result } = useAction(LoginUser, {
-    onSuccess: (data) => {
-      console.log("here");
-      redirect("/test");
-    },
-  });
+  const router = useRouter();
+
+  const { execute } = useAction(LoginUser,{
+    onSuccess: () => {
+      router.push("/dashboard")
+    }
+  }
+  );
 
   function onSubmit(values: z.infer<typeof LoginSchema>) {
     execute(values);
