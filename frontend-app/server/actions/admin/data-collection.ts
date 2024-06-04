@@ -1,11 +1,10 @@
 "use server";
 
-import { DataCollectionSchema } from "@/types/data-collection-schema";
+import { DataCollectionSchema } from "@/schema/data-collection-schema";
 import { createSafeActionClient } from "next-safe-action";
 import { gameData, gameType } from "@/server/actions/admin/helpers/game-types";
-import { games } from "@/server/schema";
-import { db } from "@/server";
-import { eq } from "drizzle-orm";
+import { pb } from "@/lib/pocketbase";
+import { ClientResponseError } from "pocketbase";
 
 const action = createSafeActionClient();
 
@@ -18,13 +17,12 @@ export const DataCollection = action(
       console.log(url);
       const response = await fetch(url);
       const data = await response.json();
-      console.log(data);
 
       const gamesData: gameData[] = Object.entries(
         data.scores as Record<string, gameType>
       ).map(([id, game]) => {
         return {
-          id: id,
+          gameID: id,
           date: new Date(game.date * 1000), // convert UNIX timestamp to Date object
           status: game.eventStatus,
           tvStation: game.tvStationName,
@@ -37,36 +35,40 @@ export const DataCollection = action(
       
       // for each game in gamesData we are going to either create or update the database
       for (const game of gamesData) {
-        const gameExists = await db.query.games.findFirst({
-          where: eq(games.id, game.id)
-        });
-        if (gameExists) {
-          await db.update(games).set({
-            league,
-            year: parseInt(year),
-            week: parseInt(week),
-            date: game.date,
-            status: game.status,
-            tvStation: game.tvStation,
-            homeTeam: game.homeTeam,
-            homeSpread: game.homeSpread,
-            awayTeam: game.awayTeam,
-            awaySpread: game.awaySpread,
-          }).where(eq(games.id, game.id));
-        } else {
-          await db.insert(games).values({
-            id: game.id,
-            league,
-            year: parseInt(year),
-            week: parseInt(currentWeek), // currentWeek is the week to sync NFL/NCAAF
-            date: game.date,
-            status: game.status,
-            tvStation: game.tvStation,
-            homeTeam: game.homeTeam,
-            homeSpread: game.homeSpread,
-            awayTeam: game.awayTeam,
-            awaySpread: game.awaySpread,
+        try {
+          const gameExists = await pb.collection("games").getFirstListItem(`game_id="${game.gameID}"`)
+          await pb.collection("games").update(gameExists.id, {
+            "game_id": game.gameID,
+            "date": game.date,
+            "status": game.status,
+            "home_spread": game.homeSpread,
+            "away_spread": game.awaySpread,
+            "home_name": game.homeTeam,
+            "away_name": game.awayTeam,
+            "tv_station": game.tvStation,
+            "week": currentWeek,
           })
+        } catch (error) {
+          if (error instanceof ClientResponseError) {
+            // Unable to find game in database so going to create a new entry
+            await pb.collection("games").create({
+              "game_id": game.gameID,
+              "date": game.date,
+              // "stadium": game.stadium,
+              "status": game.status,
+              "home_spread": game.homeSpread,
+              "away_spread": game.awaySpread,
+              "home_name": game.homeTeam,
+              "away_name": game.awayTeam,
+              // "home_score": game.homeScore,
+              // "away_score": game.awayScore,
+              "tv_station": game.tvStation,
+              "week": currentWeek,
+            })
+          } else {
+            // Another error occurred passing it up the chain
+            return { error: "Data Collection Failed" };
+          }
         }
       }
     } catch (error) {

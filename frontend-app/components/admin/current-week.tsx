@@ -22,8 +22,8 @@ import { CurrentWeekSchema } from "@/schema/current-week-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "../ui/input";
 import * as z from "zod";
-// import { FormSuccess } from "../auth/form-success";
-// import { FormError } from "../auth/form-error";
+import { FormSuccess } from "@/components/form/form-success";
+import { FormError } from "@/components/form/form-error";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -38,14 +38,14 @@ export default function CurrentWeekCard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const { execute, status } = useAction(CurrentWeekUpdate, {
-    // onSuccess(data) {
-    //   if (data?.error) {
-    //     setError(data.error);
-    //   }
-    //   if (data?.success) {
-    //     setSuccess(data.success);
-    //   }
-    // },
+    onSuccess(data) {
+      if (data?.error) {
+        setError(data.error);
+      }
+      if (data?.success) {
+        setSuccess(data.success);
+      }
+    },
   });
 
   const OnSubmit = (values: z.infer<typeof CurrentWeekSchema>) => {

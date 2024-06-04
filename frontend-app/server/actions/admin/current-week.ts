@@ -1,31 +1,24 @@
 "use server"
 
-import { db } from "@/server";
-import { CurrentWeekSchema } from "@/types/current-week";
-import {currentWeeks } from "@/server/schema";
-import { eq } from "drizzle-orm";
+import { pb } from "@/lib/pocketbase";
+import { CurrentWeekSchema } from "@/schema/current-week-schema";
 import { createSafeActionClient } from "next-safe-action";
+import { revalidatePath } from "next/cache";
+import { ClientResponseError } from "pocketbase";
 
 const action = createSafeActionClient();
 
 export const CurrentWeekUpdate = action(CurrentWeekSchema, async ({ currentWeek }) => {
     try {
-        // do something with currentWeek
-        const currentWeekDB = await db.query.currentWeeks.findFirst({
-            where: eq(currentWeeks.id, "current_week")
+        // check if current week is present in db
+        const currentData = await pb.collection("current").getFirstListItem("")
+        await pb.collection("current").update(currentData.id, {
+            "week": currentWeek,
         })
-        if(currentWeekDB){
-            await db.update(currentWeeks).set({
-                currentWeek: currentWeek
-            }).where(eq(currentWeeks.id, "current_week"))
-        } else {
-            await db.insert(currentWeeks).values({
-                id: "current_week",
-                currentWeek: currentWeek
-            })
-        }
         return { success: "Current week updated" };
     } catch (error) {
-        return { error: "Error updating current week" };
+        if (error instanceof ClientResponseError){
+            return { error: "Error updating current week no current week present in DB." };
+        }
     }
 })

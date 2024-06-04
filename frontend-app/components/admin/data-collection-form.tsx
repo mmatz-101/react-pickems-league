@@ -20,11 +20,11 @@ import {
 } from "../ui/form";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
-import { DataCollectionSchema } from "@/types/data-collection-schema";
+import { DataCollectionSchema } from "@/schema/data-collection-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "../ui/input";
-import { FormSuccess } from "../auth/form-success";
-import { FormError } from "../auth/form-error";
+import { FormSuccess } from "@/components/form/form-success";
+import { FormError } from "@/components/form/form-error";
 import { useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { DataCollection } from "@/server/actions/admin/data-collection";
