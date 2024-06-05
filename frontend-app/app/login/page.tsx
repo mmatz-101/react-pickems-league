@@ -29,12 +29,11 @@ export default function SignupPage() {
 
   const router = useRouter();
 
-  const { execute } = useAction(LoginUser,{
+  const { execute } = useAction(LoginUser, {
     onSuccess: () => {
-      router.push("/dashboard")
-    }
-  }
-  );
+      router.push("/user/dashboard");
+    },
+  });
 
   function onSubmit(values: z.infer<typeof LoginSchema>) {
     execute(values);

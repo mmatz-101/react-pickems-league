@@ -16,5 +16,5 @@ export const LoginUser = action(LoginSchema, async ({ email, password }) => {
   } catch (error) {
     return { error: "User login failed" };
   }
-  redirect("/dashboard");
+  redirect("/user/dashboard");
 });
