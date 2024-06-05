@@ -15,6 +15,7 @@ export const CurrentWeekUpdate = action(CurrentWeekSchema, async ({ currentWeek 
         await pb.collection("current").update(currentData.id, {
             "week": currentWeek,
         })
+        revalidatePath("/admin/dashboard");
         return { success: "Current week updated" };
     } catch (error) {
         if (error instanceof ClientResponseError){

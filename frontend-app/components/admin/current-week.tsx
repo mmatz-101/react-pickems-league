@@ -30,7 +30,11 @@ import { useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { CurrentWeekUpdate } from "@/server/actions/admin/current-week";
 
-export default function CurrentWeekCard() {
+export default function CurrentWeekCard({
+  currentWeek,
+}: {
+  currentWeek: number;
+}) {
   const form = useForm<z.infer<typeof CurrentWeekSchema>>({
     resolver: zodResolver(CurrentWeekSchema),
     defaultValues: {},
@@ -55,7 +59,7 @@ export default function CurrentWeekCard() {
     <Card className="sm:col-span-1">
       <CardHeader className="pb-2">
         <CardDescription>This Week</CardDescription>
-        <CardTitle className="text-4xl">Current Week Here</CardTitle>
+        <CardTitle className="text-4xl">{currentWeek}</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
