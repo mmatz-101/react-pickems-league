@@ -15,7 +15,9 @@ export default async function PicksPage() {
       <h1>Picks Page</h1>
       <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 place-items-center gap-4 py-4">
         {gamesData.map((game) => (
-          <GameCard game={game} key={game.id} />
+          <div className="min-w-[360px] flex-grow" key={game.id}>
+            <GameCard game={game} key={game.id} />
+          </div>
         ))}
       </div>
     </>

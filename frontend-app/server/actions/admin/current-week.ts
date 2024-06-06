@@ -1,12 +1,10 @@
 "use server"
 
 import { pb } from "@/lib/pocketbase";
+import { action } from "@/lib/safe-action";
 import { CurrentWeekSchema } from "@/schema/current-week-schema";
-import { createSafeActionClient } from "next-safe-action";
 import { revalidatePath } from "next/cache";
 import { ClientResponseError } from "pocketbase";
-
-const action = createSafeActionClient();
 
 export const CurrentWeekUpdate = action(CurrentWeekSchema, async ({ currentWeek }) => {
     try {
