@@ -1,6 +1,6 @@
 "use server"
 
-import { pb } from "@/lib/pocketbase";
+import { getPB } from "@/lib/pocketbase";
 import { action } from "@/lib/safe-action";
 import { CurrentWeekSchema } from "@/schema/current-week-schema";
 import { revalidatePath } from "next/cache";
@@ -8,6 +8,7 @@ import { ClientResponseError } from "pocketbase";
 
 export const CurrentWeekUpdate = action(CurrentWeekSchema, async ({ currentWeek }) => {
     try {
+        const pb = getPB();
         // check if current week is present in db
         const currentData = await pb.collection("current").getFirstListItem("")
         await pb.collection("current").update(currentData.id, {

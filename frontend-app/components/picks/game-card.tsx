@@ -1,6 +1,6 @@
 "use client";
 
-import { gameType } from "@/server/picks/helpers/game-data";
+import { gameType } from "@/server/actions/picks/helpers/game-data";
 import {
   Card,
   CardContent,
@@ -8,7 +8,7 @@ import {
   CardFooter,
   CardHeader,
 } from "../ui/card";
-import { BellRing } from "lucide-react";
+import { BellRing, TrashIcon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -18,14 +18,24 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Button } from "../ui/button";
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { submitPick } from "@/server/actions/picks/submit-pick";
-import { z } from "zod";
+import { set, z } from "zod";
+import { useToast } from "../ui/use-toast";
+import { pickType } from "@/server/actions/picks/helpers/pick-data";
+import { deletePick } from "@/server/actions/picks/delete-picks";
 
-export default function GameCard({ game }: { game: gameType }) {
+export default function GameCard({
+  game,
+  pick,
+}: {
+  game: gameType;
+  pick: pickType | undefined;
+}) {
   const [homeTeamSelected, setHomeTeamSelected] = useState(false);
   function homeTeamClick() {
+    console.log("home team clicked");
     if (!homeTeamSelected) {
       setHomeTeamSelected(true);
       setAwayTeamSelected(false);
@@ -34,6 +44,7 @@ export default function GameCard({ game }: { game: gameType }) {
       setAwayTeamSelected(false);
     }
   }
+
   const [awayTeamSelected, setAwayTeamSelected] = useState(false);
   function awayTeamClick() {
     if (!awayTeamSelected) {
@@ -45,67 +56,138 @@ export default function GameCard({ game }: { game: gameType }) {
     }
   }
 
+  useEffect(() => {
+    console.log(pick);
+    if (pick) {
+      if (pick.team_selected === "HOME") {
+        setHomeTeamSelected(true);
+      } else {
+        setAwayTeamSelected(true);
+      }
+      if (pick.pick_type === "REGULAR") {
+        setPickTypeSelected("REGULAR");
+      } else {
+        setPickTypeSelected("BINNY");
+      }
+    }
+  }, []);
+
   const pickTypeSchema = z.enum(["REGULAR", "BINNY"]);
   const [pickTypeSelected, setPickTypeSelected] =
     useState<z.infer<typeof pickTypeSchema>>("REGULAR");
 
-  const { execute, result } = useAction(submitPick, {
+  const { toast } = useToast();
+
+  const { execute } = useAction(submitPick, {
     onSuccess: (data) => {
-      console.log(result);
-      console.log(data);
+      console.log("success");
+      toast({
+        title: "Pick Submitted",
+        description: data.success,
+      });
     },
     onError: (data) => {
-      console.log(result);
-      console.log(data);
+      console.log("error");
+      toast({
+        title: "Pick Submitted Error",
+        description: "Your pick has been submitted.",
+        variant: "destructive",
+      });
     },
   });
   return (
-    <Card>
-      <CardHeader>
-        <CardDescription className="flex justify-between">
-          <span>{game.tv_station}</span>
-          <span>{game.date}</span>
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <div
-          onClick={homeTeamClick}
-          className={`flex items-center space-x-4 rounded-md border p-4 hover:bg-primary/5 cursor-pointer ${
-            homeTeamSelected ? "bg-primary/25 hover:bg-primary/30" : ""
-          }`}
-        >
-          <BellRing />
-          <div className="flex-1 space-y-1">
-            <p className="text-sm font-medium leading-none">{game.home_name}</p>
-            <p className="text-sm text-muted-foreground">record</p>
+    <Suspense fallback={<div>Loading...</div>}>
+      <Card>
+        <CardHeader>
+          <CardDescription className="flex justify-between content-center">
+            <span>{game.tv_station}</span>
+            <span>{game.date}</span>
+            {pick ? (
+              <Button
+                onClick={async () => {
+                  if (pick) {
+                    try {
+                      const resp = await deletePick({ id: pick.id });
+                      setHomeTeamSelected(false);
+                      setAwayTeamSelected(false);
+                      toast({
+                        title: "Pick Deleted",
+                        description: "Your pick has been deleted.",
+                        variant: "destructive",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Server Error",
+                        description: "Try refreshing the page.",
+                        variant: "desctructive",
+                      });
+                    }
+                  }
+                }}
+                size={"icon"}
+                variant={"destructive"}
+              >
+                <TrashIcon />
+              </Button>
+            ) : null}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div
+            onClick={homeTeamClick}
+            className={`flex items-center space-x-4 rounded-md border p-4  cursor-pointer ${
+              homeTeamSelected
+                ? "bg-primary/25 hover:bg-primary/20"
+                : "hover:bg-primary/5"
+            }`}
+          >
+            <BellRing />
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium leading-none">
+                {game.home_name}
+              </p>
+              <p className="text-sm text-muted-foreground">record</p>
+            </div>
+            <span>{game.home_spread}</span>
           </div>
-          <span>{game.home_spread}</span>
-        </div>
-        <div
-          onClick={awayTeamClick}
-          className={`flex items-center space-x-4 rounded-md border p-4 hover:bg-primary/5 cursor-pointer ${
-            awayTeamSelected ? "bg-primary/25 hover:bg-primary/30" : ""
-          }`}
-        >
-          <BellRing />
-          <div className="flex-1 space-y-1">
-            <p className="text-sm font-medium leading-none">{game.away_name}</p>
-            <p className="text-sm text-muted-foreground">record</p>
+          <div
+            onClick={awayTeamClick}
+            className={`flex items-center space-x-4 rounded-md border p-4  cursor-pointer ${
+              awayTeamSelected
+                ? "bg-primary/25 hover:bg-primary/20"
+                : "hover:bg-primary/5"
+            }`}
+          >
+            <BellRing />
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium leading-none">
+                {game.away_name}
+              </p>
+              <p className="text-sm text-muted-foreground">record</p>
+            </div>
+            <span>{game.away_spread}</span>
           </div>
-          <span>{game.away_spread}</span>
-        </div>
-      </CardContent>
-      {homeTeamSelected || awayTeamSelected ? (
-        <CardFooter>
+        </CardContent>
+        <CardFooter
+          className={homeTeamSelected || awayTeamSelected ? "" : "invisible"}
+        >
           <div className="flex flex-grow justify-between items-end">
-            <div className="flex-col container">
+            <div className="container pl-0">
               <Select
                 onValueChange={(value: "REGULAR" | "BINNY") =>
                   setPickTypeSelected(value)
                 }
               >
                 <SelectTrigger className="">
-                  <SelectValue placeholder="Select a pick type." />
+                  {pickTypeSelected ? (
+                    pickTypeSelected === "REGULAR" ? (
+                      <SelectValue placeholder="REGULAR" />
+                    ) : (
+                      <SelectValue placeholder="BINNY" />
+                    )
+                  ) : (
+                    <SelectValue placeholder="Select a pick type." />
+                  )}
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
@@ -119,6 +201,7 @@ export default function GameCard({ game }: { game: gameType }) {
               size={"sm"}
               onClick={() => {
                 execute({
+                  id: pick ? pick.id : "",
                   game: game.id,
                   teamSelected: homeTeamSelected ? "HOME" : "AWAY",
                   pickType: pickTypeSelected,
@@ -129,7 +212,7 @@ export default function GameCard({ game }: { game: gameType }) {
             </Button>
           </div>
         </CardFooter>
-      ) : null}
-    </Card>
+      </Card>
+    </Suspense>
   );
 }
