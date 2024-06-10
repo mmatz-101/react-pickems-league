@@ -21,7 +21,7 @@ import { Button } from "../ui/button";
 import { Suspense, useEffect, useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { submitPick } from "@/server/actions/picks/submit-pick";
-import { set, z } from "zod";
+import { z } from "zod";
 import { useToast } from "../ui/use-toast";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
 import { deletePick } from "@/server/actions/picks/delete-picks";
@@ -119,7 +119,7 @@ export default function GameCard({
                       toast({
                         title: "Server Error",
                         description: "Try refreshing the page.",
-                        variant: "desctructive",
+                        variant: "destructive",
                       });
                     }
                   }

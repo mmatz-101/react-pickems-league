@@ -13,7 +13,7 @@ export type gameType = {
     home_spread: number;
     id: string;
     pick_winner: string;
-    select: string;
+    league: "NFL" | "NCAAF"; 
     stadium: string;
     status: string;
     tv_station: string;

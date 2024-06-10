@@ -1,9 +1,10 @@
 import CurrentWeek from "@/components/admin/current-week";
 import DataCollectionForm from "@/components/admin/data-collection-form";
-import { pb } from "@/lib/pocketbase";
+import { getPB } from "@/lib/pocketbase";
 import { currentDataType } from "@/server/actions/admin/helpers/current-data";
 
 export default async function AdminDashboard() {
+  const pb = getPB();
   const currentData: currentDataType = await pb
     .collection("current")
     .getFirstListItem("");

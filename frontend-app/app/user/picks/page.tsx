@@ -1,4 +1,5 @@
 import GameCard from "@/components/picks/game-card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Toaster } from "@/components/ui/toaster";
 import { getPB } from "@/lib/pocketbase";
 import { currentDataType } from "@/server/actions/admin/helpers/current-data";
@@ -10,8 +11,11 @@ export default async function PicksPage() {
   const currentData: currentDataType = await pb
     .collection("current")
     .getFirstListItem("");
-  const gamesData: gameType[] = await pb.collection("games").getFullList({
-    filter: `week=${currentData.week}`,
+  const gamesNFLData: gameType[] = await pb.collection("games").getFullList({
+    filter: `week=${currentData.week} && league="NFL"`,
+  });
+  const gamesNCAAFData: gameType[] = await pb.collection("games").getFullList({
+    filter: `week=${currentData.week} && league="NCAAF"`,
   });
   const currentPicks: pickType[] = await pb.collection("picks").getFullList({
     filter: `week=${currentData.week} && user="${pb.authStore.model!.id}"`,
@@ -19,17 +23,39 @@ export default async function PicksPage() {
   return (
     <>
       <h1>Picks Page</h1>
-      <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 place-items-center gap-4 py-4">
-        {gamesData.map((game) => (
-          <div className="min-w-[360px] flex-grow" key={game.id}>
-            <GameCard
-              game={game}
-              pick={currentPicks.find((pick) => pick.game === game.id)}
-              key={game.id}
-            />
+      <Tabs defaultValue="NFL" className="">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="NFL">NFL</TabsTrigger>
+          <TabsTrigger value="NCAAF">NCAA</TabsTrigger>
+        </TabsList>
+        <TabsContent value="NFL">
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 place-items-center gap-4 py-4">
+            {gamesNFLData.map((game) => (
+              <div className="min-w-[360px] flex-grow" key={game.id}>
+                <GameCard
+                  game={game}
+                  pick={currentPicks.find((pick) => pick.game === game.id)}
+                  key={game.id}
+                />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </TabsContent>
+        <TabsContent value="NCAA">
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 place-items-center gap-4 py-4">
+            {gamesNCAAFData.map((game) => (
+              <div className="min-w-[360px] flex-grow" key={game.id}>
+                <GameCard
+                  game={game}
+                  pick={currentPicks.find((pick) => pick.game === game.id)}
+                  key={game.id}
+                />
+              </div>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+
       <Toaster />
     </>
   );

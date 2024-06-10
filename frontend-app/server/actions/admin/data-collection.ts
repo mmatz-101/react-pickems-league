@@ -3,8 +3,8 @@
 import { DataCollectionSchema } from "@/schema/data-collection-schema";
 import { createSafeActionClient } from "next-safe-action";
 import { gameData, gameType } from "@/server/actions/admin/helpers/game-types";
-import { pb } from "@/lib/pocketbase";
 import { ClientResponseError } from "pocketbase";
+import { getPB } from "@/lib/pocketbase";
 
 const action = createSafeActionClient();
 
@@ -13,6 +13,7 @@ export const DataCollection = action(
   DataCollectionSchema,
   async ({ league, year, week, currentWeek }) => {
     try {
+      const pb = getPB();
       const url = `https://www.oddsshark.com/api/scores/football/${league.toLowerCase()}/${year}/${week}?_format=json`;
       console.log(url);
       const response = await fetch(url);
