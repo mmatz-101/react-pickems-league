@@ -1,6 +1,6 @@
 "use server";
 
-import { pb } from "@/lib/pocketbase";
+import { getPB } from "@/lib/pocketbase";
 import { action } from "@/lib/safe-action";
 import { LoginSchema } from "@/schema/login-schema";
 import { cookies } from "next/headers";
@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 
 export const LoginUser = action(LoginSchema, async ({ email, password }) => {
   try {
+    const pb = getPB();
     await pb
       .collection("users")
       .authWithPassword(email, password);
