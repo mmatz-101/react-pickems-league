@@ -48,6 +48,7 @@ export const DataCollection = action(
             "away_name": game.awayTeam,
             "tv_station": game.tvStation,
             "week": currentWeek,
+            "league": league,
           })
         } catch (error) {
           if (error instanceof ClientResponseError) {
@@ -65,6 +66,7 @@ export const DataCollection = action(
               // "away_score": game.awayScore,
               "tv_station": game.tvStation,
               "week": currentWeek,
+              "league": league,
             })
           } else {
             // Another error occurred passing it up the chain
