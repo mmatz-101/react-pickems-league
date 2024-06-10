@@ -41,7 +41,7 @@ export default async function PicksPage() {
             ))}
           </div>
         </TabsContent>
-        <TabsContent value="NCAA">
+        <TabsContent value="NCAAF">
           <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 place-items-center gap-4 py-4">
             {gamesNCAAFData.map((game) => (
               <div className="min-w-[360px] flex-grow" key={game.id}>

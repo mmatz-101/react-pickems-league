@@ -35,7 +35,6 @@ export default function GameCard({
 }) {
   const [homeTeamSelected, setHomeTeamSelected] = useState(false);
   function homeTeamClick() {
-    console.log("home team clicked");
     if (!homeTeamSelected) {
       setHomeTeamSelected(true);
       setAwayTeamSelected(false);
@@ -57,7 +56,6 @@ export default function GameCard({
   }
 
   useEffect(() => {
-    console.log(pick);
     if (pick) {
       if (pick.team_selected === "HOME") {
         setHomeTeamSelected(true);
@@ -80,17 +78,26 @@ export default function GameCard({
 
   const { execute } = useAction(submitPick, {
     onSuccess: (data) => {
-      console.log("success");
-      toast({
-        title: "Pick Submitted",
-        description: data.success,
-      });
+      if (data.error) {
+        toast({
+          title: "Pick unable to be Submitted.",
+          description: data.error,
+          variant: "destructive",
+        });
+        setHomeTeamSelected(false);
+        setAwayTeamSelected(false);
+      } else {
+        toast({
+          title: "Pick Submitted",
+          description: data.success,
+        });
+      }
     },
     onError: (data) => {
       console.log("error");
       toast({
-        title: "Pick Submitted Error",
-        description: "Your pick has been submitted.",
+        title: "Server Error",
+        description: "Your pick has not been submitted.",
         variant: "destructive",
       });
     },
@@ -203,6 +210,7 @@ export default function GameCard({
                 execute({
                   id: pick ? pick.id : "",
                   game: game.id,
+                  league: game.league,
                   teamSelected: homeTeamSelected ? "HOME" : "AWAY",
                   pickType: pickTypeSelected,
                 });

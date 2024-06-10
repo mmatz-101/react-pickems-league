@@ -33,6 +33,9 @@ export default function SignupPage() {
     onSuccess: () => {
       router.push("/user/dashboard");
     },
+    onError: () => {
+      console.log("login failed");
+    },
   });
 
   function onSubmit(values: z.infer<typeof LoginSchema>) {

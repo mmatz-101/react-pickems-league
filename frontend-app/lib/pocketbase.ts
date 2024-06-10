@@ -8,6 +8,8 @@ import Pocketbase from "pocketbase";
         pb.authStore.loadFromCookie(userToken);
         return  pb
     } else {
-        throw new Error("No user token found")
+      console.log("No user token found creating.")
+      const pb = new Pocketbase(process.env.POCKETBASE_URL);
+      return pb
     }
   }

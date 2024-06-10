@@ -1,8 +1,9 @@
 "use server";
 
-import { pb } from "@/lib/pocketbase";
+import { getPB } from "@/lib/pocketbase";
 import { action } from "@/lib/safe-action";
 import { SignupSchema } from "@/schema/signup-schema";
+import Pocketbase from "pocketbase";
 
 export const SignupUser = action(
   SignupSchema,
@@ -17,6 +18,8 @@ export const SignupUser = action(
         first_name: firstName,
         last_name: lastName,
       };
+
+      const pb = getPB();
 
       const record = await pb.collection("users").create(userData);
 
