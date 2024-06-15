@@ -1,4 +1,4 @@
-import { columns } from "@/components/dashboard/columns";
+import { columns, mobileColumns } from "@/components/dashboard/columns";
 import { DataTable } from "@/components/dashboard/data-table";
 import { getPB } from "@/lib/pocketbase";
 import { currentDataType } from "@/server/actions/admin/helpers/current-data";
@@ -29,7 +29,10 @@ export default async function DashboardPage() {
       <div>
         <h1>User Dashboard</h1>
         <p>{pb.authStore.model!.first_name}</p>
-        <div className="container mx-auto py-10">
+        <div className="container mx-auto py-10 sm:block md:hidden">
+        <DataTable columns={mobileColumns} data={picks} />
+        </div>
+        <div className="container mx-auto py-10 hidden md:block">
         <DataTable columns={columns} data={picks} />
         </div>
       </div>
