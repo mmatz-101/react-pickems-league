@@ -12,6 +12,9 @@ import {
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { MoreHorizontal } from "lucide-react";
+import { deletePick } from "@/server/actions/picks/delete-picks";
+import { toast } from "../ui/use-toast";
+import { revalidatePath } from "next/cache";
 
 interface pickTypeTable extends pickType {
   expand: { game: gameType };
@@ -37,7 +40,7 @@ export const mobileColumns: ColumnDef<pickTypeTable>[] = [
   {
     id: "action",
     cell: ({ row }) => {
-      const data = row.original;
+      const pick = row.original;
 
       return (
         <DropdownMenu>
@@ -48,7 +51,23 @@ export const mobileColumns: ColumnDef<pickTypeTable>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>Delete Pick</DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => {
+              try {
+                await deletePick({ id: pick.id });
+                toast({
+                  title: "Pick Deleted",
+                  description: "Your pick has been deleted.",
+                  variant: "destructive",
+                });
+                revalidatePath("/user/dashboard")
+              } catch (error) {
+                toast({
+                  title: "Server Error",
+                  description: "Try refreshing the page.",
+                  variant: "destructive",
+                })
+              };
+            }}>Delete Pick</DropdownMenuItem>
             <DropdownMenuItem>More Information</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -81,7 +100,7 @@ export const columns: ColumnDef<pickTypeTable>[] = [
   {
     id: "action",
     cell: ({ row }) => {
-      const data = row.original;
+      const pick = row.original;
 
       return (
         <DropdownMenu>
@@ -92,7 +111,23 @@ export const columns: ColumnDef<pickTypeTable>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>Delete Pick</DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => {
+              try {
+                await deletePick({ id: pick.id });
+                toast({
+                  title: "Pick Deleted",
+                  description: "Your pick has been deleted.",
+                  variant: "destructive",
+                });
+                revalidatePath("/user/dashboard")
+              } catch (error) {
+                toast({
+                  title: "Server Error",
+                  description: "Try refreshing the page.",
+                  variant: "destructive",
+                })
+              };
+            }}>Delete Pick</DropdownMenuItem>
             <DropdownMenuItem>More Information</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
