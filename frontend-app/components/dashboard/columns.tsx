@@ -15,6 +15,7 @@ import { MoreHorizontal } from "lucide-react";
 import { deletePick } from "@/server/actions/picks/delete-picks";
 import { toast } from "../ui/use-toast";
 import { revalidatePath } from "next/cache";
+import { moreInformation } from "@/server/actions/picks/more-information";
 
 interface pickTypeTable extends pickType {
   expand: { game: gameType };
@@ -51,23 +52,27 @@ export const mobileColumns: ColumnDef<pickTypeTable>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={async () => {
-              try {
-                await deletePick({ id: pick.id });
-                toast({
-                  title: "Pick Deleted",
-                  description: "Your pick has been deleted.",
-                  variant: "destructive",
-                });
-                revalidatePath("/user/dashboard")
-              } catch (error) {
-                toast({
-                  title: "Server Error",
-                  description: "Try refreshing the page.",
-                  variant: "destructive",
-                })
-              };
-            }}>Delete Pick</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={async () => {
+                try {
+                  await deletePick({ id: pick.id });
+                  toast({
+                    title: "Pick Deleted",
+                    description: "Your pick has been deleted.",
+                    variant: "destructive",
+                  });
+                  revalidatePath("/user/dashboard");
+                } catch (error) {
+                  toast({
+                    title: "Server Error",
+                    description: "Try refreshing the page.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              Delete Pick
+            </DropdownMenuItem>
             <DropdownMenuItem>More Information</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -111,24 +116,30 @@ export const columns: ColumnDef<pickTypeTable>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={async () => {
-              try {
-                await deletePick({ id: pick.id });
-                toast({
-                  title: "Pick Deleted",
-                  description: "Your pick has been deleted.",
-                  variant: "destructive",
-                });
-                revalidatePath("/user/dashboard")
-              } catch (error) {
-                toast({
-                  title: "Server Error",
-                  description: "Try refreshing the page.",
-                  variant: "destructive",
-                })
-              };
-            }}>Delete Pick</DropdownMenuItem>
-            <DropdownMenuItem>More Information</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={async () => {
+                try {
+                  await deletePick({ id: pick.id });
+                  toast({
+                    title: "Pick Deleted",
+                    description: "Your pick has been deleted.",
+                    variant: "destructive",
+                  });
+                  revalidatePath("/user/dashboard");
+                } catch (error) {
+                  toast({
+                    title: "Server Error",
+                    description: "Try refreshing the page.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              Delete Pick
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => moreInformation({ id: pick.id })}>
+              More Information
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

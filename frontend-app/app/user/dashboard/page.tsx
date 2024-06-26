@@ -24,6 +24,7 @@ export default async function DashboardPage() {
   if (pb.authStore.isValid) {
     const picks: pickTypeQuery[] = await pb.collection("picks").getFullList({
       filter: `user="${pb.authStore.model!.id}"`,
+      sort: "-pick_type, -game.league, +game.date",
       expand: "game",
     });
 
@@ -40,13 +41,25 @@ export default async function DashboardPage() {
         <h1>User Dashboard</h1>
         <p>{pb.authStore.model!.first_name}</p>
         <div className="flex gap-4 py-4">
+          {/* TODO: Potentially convert this to a component card */}
           <Card className="max-w-md flex-grow">
-            <CardHeader>Current Week Regular Picks</CardHeader>
+            <CardHeader>Week {currentData.week} Regular Picks</CardHeader>
             <CardContent>
-              {picks.filter((pick) => pick.pick_type === "REGULAR").length} of 8
+              {
+                picks.filter(
+                  (pick) =>
+                    pick.pick_type === "REGULAR" &&
+                    pick.week === currentData.week,
+                ).length
+              }
+              {" of 8"}
               <Progress
                 value={
-                  (picks.filter((pick) => pick.pick_type === "REGULAR").length /
+                  (picks.filter(
+                    (pick) =>
+                      pick.pick_type === "REGULAR" &&
+                      pick.week === currentData.week,
+                  ).length /
                     8) *
                   100
                 }
@@ -54,12 +67,23 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
           <Card className="max-w-md flex-grow">
-            <CardHeader>Current Week Binny Picks</CardHeader>
+            <CardHeader>Week {currentData.week} Binny Picks</CardHeader>
             <CardContent>
-              {picks.filter((pick) => pick.pick_type === "BINNY").length} of 8
+              {
+                picks.filter(
+                  (pick) =>
+                    pick.pick_type === "BINNY" &&
+                    pick.week === currentData.week,
+                ).length
+              }
+              {" of 2"}
               <Progress
                 value={
-                  (picks.filter((pick) => pick.pick_type === "BINNY").length /
+                  (picks.filter(
+                    (pick) =>
+                      pick.pick_type === "BINNY" &&
+                      pick.week === currentData.week,
+                  ).length /
                     2) *
                   100
                 }
@@ -73,8 +97,11 @@ export default async function DashboardPage() {
             type="single"
             collapsible
             key={week}
+            defaultValue="item-0"
           >
-            <AccordionItem value="item-1">
+            <AccordionItem
+              value={week === currentData.week ? "item-0" : "item-1"}
+            >
               <AccordionTrigger>Week {week}</AccordionTrigger>
               <AccordionContent>
                 <div className="container mx-auto py-10 sm:block md:hidden">
