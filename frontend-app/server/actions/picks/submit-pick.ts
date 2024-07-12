@@ -62,7 +62,6 @@ export const submitPick = action(
           };
         }
       }
-
     }
     // attempty to create/update picks
     try {
@@ -93,5 +92,5 @@ export const submitPick = action(
       console.log(error.data);
       return { error: "server error" };
     }
-  }
+  },
 );
