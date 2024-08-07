@@ -68,7 +68,7 @@ export default function GameCard({
         setPickTypeSelected("BINNY");
       }
     }
-  }, []);
+  }, [pick]);
 
   const pickTypeSchema = z.enum(["REGULAR", "BINNY"]);
   const [pickTypeSelected, setPickTypeSelected] =

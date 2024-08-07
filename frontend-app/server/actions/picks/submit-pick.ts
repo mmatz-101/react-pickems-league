@@ -5,7 +5,6 @@ import { action } from "@/lib/safe-action";
 import { SubmitPickSchema } from "@/schema/submit-pick";
 import { currentDataType } from "../admin/helpers/current-data";
 import { revalidatePath } from "next/cache";
-import PicksPage from "@/app/user/picks/page";
 
 export const submitPick = action(
   SubmitPickSchema,
@@ -19,6 +18,16 @@ export const submitPick = action(
     if (!currentData.allow_picks) {
       return { error: "week is locked." };
     }
+    // get the max amount of picks based on the league
+    let maxPicks = 0;
+    let maxBinnyPicks = 0;
+    if (league === "NFL") {
+      maxPicks = currentData.max_nfl_picks;
+      maxBinnyPicks = currentData.max_nfl_binny_picks;
+    } else {
+      maxPicks = currentData.max_ncaaf_picks;
+      maxBinnyPicks = currentData.max_ncaaf_binny_picks;
+    }
     // check how many games the user has picked.
     if (pickType === "REGULAR") {
       const picks = await pb.collection("picks").getFullList({
@@ -27,17 +36,15 @@ export const submitPick = action(
         } && game.league="${league}" && pick_type="REGULAR"`,
       });
       if (id) {
-        if (picks.length > 4) {
+        if (picks.length > maxPicks) {
           return {
-            error:
-              "You have too many REGULAR picks for this week. Try removing a pick first.",
+            error: `You have too many REGULAR ${league} picks for this  week. Try removing a pick first.`,
           };
         }
       } else {
-        if (picks.length >= 4) {
+        if (picks.length >= maxPicks) {
           return {
-            error:
-              "You have too many REGULAR picks for this week. Try removing a pick first.",
+            error: `You have too many REGULAR ${league} picks for this  week. Try removing a pick first.`,
           };
         }
       }
@@ -45,20 +52,18 @@ export const submitPick = action(
       const picks = await pb.collection("picks").getFullList({
         filter: `user="${pb.authStore.model!.id}" && week=${
           currentData.week
-        } && pick_type="BINNY"`,
+        } && game.league="${league}" && pick_type="BINNY"`,
       });
       if (id) {
-        if (picks.length > 2) {
+        if (picks.length > maxBinnyPicks) {
           return {
-            error:
-              "You have too many BINNY picks for this week. Try removing a pick first.",
+            error: `You have too many BINNY ${league} picks for this week. Try removing a pick first.`,
           };
         }
       } else {
-        if (picks.length >= 2) {
+        if (picks.length >= maxBinnyPicks) {
           return {
-            error:
-              "You have too many BINNY picks for this week. Try removing a pick first.",
+            error: `You have too many BINNY ${league} picks for this week. Try removing a pick first.`,
           };
         }
       }

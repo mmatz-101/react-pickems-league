@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Toaster } from "@/components/ui/toaster";
 
 interface pickTypeQuery extends pickType {
   expand: { game: gameType };
@@ -52,7 +53,7 @@ export default async function DashboardPage() {
                     pick.week === currentData.week,
                 ).length
               }
-              {" of 8"}
+              {` of ${currentData.max_nfl_picks + currentData.max_ncaaf_picks}`}
               <Progress
                 value={
                   (picks.filter(
@@ -60,7 +61,7 @@ export default async function DashboardPage() {
                       pick.pick_type === "REGULAR" &&
                       pick.week === currentData.week,
                   ).length /
-                    8) *
+                    (currentData.max_nfl_picks + currentData.max_ncaaf_picks)) *
                   100
                 }
               />
@@ -76,7 +77,7 @@ export default async function DashboardPage() {
                     pick.week === currentData.week,
                 ).length
               }
-              {" of 2"}
+              {` of ${currentData.max_nfl_binny_picks + currentData.max_ncaaf_binny_picks}`}
               <Progress
                 value={
                   (picks.filter(
@@ -84,7 +85,8 @@ export default async function DashboardPage() {
                       pick.pick_type === "BINNY" &&
                       pick.week === currentData.week,
                   ).length /
-                    2) *
+                    (currentData.max_nfl_binny_picks +
+                      currentData.max_ncaaf_binny_picks)) *
                   100
                 }
               />
@@ -120,6 +122,8 @@ export default async function DashboardPage() {
             </AccordionItem>
           </Accordion>
         ))}
+          
+      <Toaster />
       </div>
     );
   }

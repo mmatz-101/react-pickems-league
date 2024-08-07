@@ -64,8 +64,9 @@ export const mobileColumns: ColumnDef<pickTypeTable>[] = [
                   revalidatePath("/user/dashboard");
                 } catch (error) {
                   toast({
-                    title: "Server Error",
-                    description: "Try refreshing the page.",
+                    title: "Picks Closed",
+                    description:
+                      "Unable to delete picks. When allow picks is closed",
                     variant: "destructive",
                   });
                 }
@@ -128,8 +129,9 @@ export const columns: ColumnDef<pickTypeTable>[] = [
                   revalidatePath("/user/dashboard");
                 } catch (error) {
                   toast({
-                    title: "Server Error",
-                    description: "Try refreshing the page.",
+                    title: "Picks Closed",
+                    description:
+                      "Unable to delete picks. When allow picks is closed",
                     variant: "destructive",
                   });
                 }
