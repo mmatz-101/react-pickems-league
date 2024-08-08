@@ -107,36 +107,37 @@ export default function GameCard({
       <Card>
         <CardHeader>
           <CardDescription className="flex justify-between content-center">
-            <span>{game.tv_station}</span>
-            <span>{game.date}</span>
-            {pick ? (
-              <Button
-                onClick={async () => {
-                  if (pick) {
-                    try {
-                      const resp = await deletePick({ id: pick.id });
-                      setHomeTeamSelected(false);
-                      setAwayTeamSelected(false);
-                      toast({
-                        title: "Pick Deleted",
-                        description: "Your pick has been deleted.",
-                        variant: "destructive",
-                      });
-                    } catch (error) {
-                      toast({
-                        title: "Server Error",
-                        description: "Try refreshing the page.",
-                        variant: "destructive",
-                      });
-                    }
+            <p className="flex flex-col">
+              <span>{game.tv_station}</span>
+              <span>{game.date}</span>
+            </p>
+            <Button
+              className={pick ? "" : "invisible"}
+              onClick={async () => {
+                if (pick) {
+                  try {
+                    const resp = await deletePick({ id: pick.id });
+                    setHomeTeamSelected(false);
+                    setAwayTeamSelected(false);
+                    toast({
+                      title: "Pick Deleted",
+                      description: "Your pick has been deleted.",
+                      variant: "destructive",
+                    });
+                  } catch (error) {
+                    toast({
+                      title: "Server Error",
+                      description: "Try refreshing the page.",
+                      variant: "destructive",
+                    });
                   }
-                }}
-                size={"icon"}
-                variant={"destructive"}
-              >
-                <TrashIcon />
-              </Button>
-            ) : null}
+                }
+              }}
+              size={"icon"}
+              variant={"destructive"}
+            >
+              <TrashIcon />
+            </Button>
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
