@@ -1,9 +1,8 @@
 "use server";
 
-import { getPB } from "@/lib/pocketbase";
+import { getPB } from "@/app/pocketbase";
 import { action } from "@/lib/safe-action";
 import { SignupSchema } from "@/schema/signup-schema";
-import Pocketbase from "pocketbase";
 
 export const SignupUser = action(
   SignupSchema,
@@ -26,10 +25,10 @@ export const SignupUser = action(
       // send an email verification request
       await pb.collection("users").requestVerification(email);
 
-      return {success: "User created successfully", record};
+      return { success: "User created successfully", record };
     } catch (error) {
       console.log(error);
-      return {error: "User creation failed"}
+      return { error: "User creation failed" };
     }
-  }
+  },
 );

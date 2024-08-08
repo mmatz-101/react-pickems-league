@@ -1,6 +1,6 @@
 "use server";
 
-import { getPB } from "@/lib/pocketbase";
+import { getPB } from "@/app/pocketbase";
 import { action } from "@/lib/safe-action";
 import { SubmitPickSchema } from "@/schema/submit-pick";
 import { currentDataType } from "../admin/helpers/current-data";
@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 export const submitPick = action(
   SubmitPickSchema,
   async ({ id, game, league, teamSelected, pickType }) => {
-    const pb = getPB();
+    const pb = await getPB();
     // get current data
     const currentData: currentDataType = await pb
       .collection("current")

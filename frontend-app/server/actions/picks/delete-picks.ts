@@ -1,6 +1,6 @@
 "use server";
 
-import { getPB } from "@/lib/pocketbase";
+import { getPB } from "@/app/pocketbase";
 import { action } from "@/lib/safe-action";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -11,7 +11,7 @@ const deleteSchema = z.object({
 });
 
 export const deletePick = action(deleteSchema, async ({ id }) => {
-  const pb = getPB();
+  const pb = await getPB();
   const currentData: currentDataType = await pb
     .collection("current")
     .getFirstListItem("");

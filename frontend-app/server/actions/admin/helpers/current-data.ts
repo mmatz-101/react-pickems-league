@@ -10,4 +10,6 @@ export type currentDataType = {
   max_ncaaf_picks: number;
   max_nfl_binny_picks: number;
   max_ncaaf_binny_picks: number;
+  regular_point_value: number;
+  binny_point_value: number;
 };
