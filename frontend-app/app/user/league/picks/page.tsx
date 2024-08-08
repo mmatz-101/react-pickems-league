@@ -6,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { getPB } from "@/lib/pocketbase";
+import { getPB } from "@/app/pocketbase";
 import { currentDataType } from "@/server/actions/admin/helpers/current-data";
 import { gameType } from "@/server/actions/picks/helpers/game-data";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
@@ -18,7 +18,7 @@ interface pickTypeQuery extends pickType {
 }
 
 export default async function LeaguePicksPage() {
-  const pb = getPB();
+  const pb = await getPB();
 
   const currentData: currentDataType = await pb
     .collection("current")

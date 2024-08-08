@@ -1,13 +1,13 @@
 import GameCard from "@/components/picks/game-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Toaster } from "@/components/ui/toaster";
-import { getPB } from "@/lib/pocketbase";
+import { getPB } from "@/app/pocketbase";
 import { currentDataType } from "@/server/actions/admin/helpers/current-data";
 import { gameType } from "@/server/actions/picks/helpers/game-data";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
 
 export default async function PicksPage() {
-  const pb = getPB();
+  const pb = await getPB();
   const currentData: currentDataType = await pb
     .collection("current")
     .getFirstListItem("");

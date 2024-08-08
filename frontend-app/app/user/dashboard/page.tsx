@@ -1,6 +1,5 @@
 import { columns, mobileColumns } from "@/components/dashboard/columns";
 import { DataTable } from "@/components/dashboard/data-table";
-import { getPB } from "@/lib/pocketbase";
 import { currentDataType } from "@/server/actions/admin/helpers/current-data";
 import { gameType } from "@/server/actions/picks/helpers/game-data";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
@@ -14,13 +13,14 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Toaster } from "@/components/ui/toaster";
+import { getPB } from "@/app/pocketbase";
 
 interface pickTypeQuery extends pickType {
   expand: { game: gameType };
 }
 
 export default async function DashboardPage() {
-  const pb = getPB();
+  const pb = await getPB();
 
   if (pb.authStore.isValid) {
     const picks: pickTypeQuery[] = await pb.collection("picks").getFullList({
@@ -122,8 +122,8 @@ export default async function DashboardPage() {
             </AccordionItem>
           </Accordion>
         ))}
-          
-      <Toaster />
+
+        <Toaster />
       </div>
     );
   }
