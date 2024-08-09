@@ -20,7 +20,7 @@ import {
 import { Button } from "../ui/button";
 import { Suspense, useEffect, useState } from "react";
 import { useAction } from "next-safe-action/hooks";
-import { submitPick } from "@/server/actions/picks/submit-pick";
+import { ReturnInfo, submitPick } from "@/server/actions/picks/submit-pick";
 import { z } from "zod";
 import { useToast } from "../ui/use-toast";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
@@ -77,15 +77,18 @@ export default function GameCard({
   const { toast } = useToast();
 
   const { execute } = useAction(submitPick, {
-    onSuccess: (data) => {
+    onSuccess: (data: ReturnInfo) => {
       if (data.error) {
         toast({
-          title: "Pick unable to be Submitted.",
+          title: "Pick unable to be submitted.",
           description: data.error,
           variant: "destructive",
         });
-        setHomeTeamSelected(false);
-        setAwayTeamSelected(false);
+
+        if (!data.update) {
+          setHomeTeamSelected(false);
+          setAwayTeamSelected(false);
+        }
       } else {
         toast({
           title: "Pick Submitted",
@@ -94,10 +97,11 @@ export default function GameCard({
       }
     },
     onError: (data) => {
-      console.log("error");
+      console.log(data);
       toast({
         title: "Server Error",
-        description: "Your pick has not been submitted.",
+        description:
+          "Your pick has not been submitted. Try refreshing the page.",
         variant: "destructive",
       });
     },
@@ -107,10 +111,10 @@ export default function GameCard({
       <Card>
         <CardHeader>
           <CardDescription className="flex justify-between content-center">
-            <p className="flex flex-col">
+            <span className="flex flex-col">
               <span>{game.tv_station}</span>
               <span>{game.date}</span>
-            </p>
+            </span>
             <Button
               className={pick ? "" : "invisible"}
               onClick={async () => {

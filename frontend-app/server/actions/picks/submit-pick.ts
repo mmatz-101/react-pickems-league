@@ -5,6 +5,13 @@ import { action } from "@/lib/safe-action";
 import { SubmitPickSchema } from "@/schema/submit-pick";
 import { currentDataType } from "../admin/helpers/current-data";
 import { revalidatePath } from "next/cache";
+import { gameType } from "./helpers/game-data";
+
+export interface ReturnInfo {
+  error?: string;
+  success?: string;
+  update?: boolean;
+}
 
 export const submitPick = action(
   SubmitPickSchema,
@@ -14,9 +21,27 @@ export const submitPick = action(
     const currentData: currentDataType = await pb
       .collection("current")
       .getFirstListItem("");
+    // get the game data
+    const gameData: gameType = await pb
+      .collection("games")
+      .getFirstListItem(`id="${game}"`);
     // check if the week is locked
     if (!currentData.allow_picks) {
-      return { error: "week is locked." };
+      let returnInfo: ReturnInfo = { error: "week is locked." };
+      if (id) {
+        returnInfo.update = true;
+      }
+      return returnInfo;
+    }
+    // check if the game has started
+    if (gameData.status !== "Incomplete") {
+      let returnInfo: ReturnInfo = {
+        error: "game has already started/completed.",
+      };
+      if (id) {
+        returnInfo.update = true;
+      }
+      return returnInfo;
     }
     // get the max amount of picks based on the league
     let maxPicks = 0;
