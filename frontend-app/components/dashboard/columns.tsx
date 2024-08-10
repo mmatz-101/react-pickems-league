@@ -55,7 +55,7 @@ export const mobileColumns: ColumnDef<pickTypeTable>[] = [
             <DropdownMenuItem
               onClick={async () => {
                 try {
-                  await deletePick({ id: pick.id });
+                  await deletePick({ id: pick.id, gameID: pick.game });
                   toast({
                     title: "Pick Deleted",
                     description: "Your pick has been deleted.",
@@ -120,7 +120,7 @@ export const columns: ColumnDef<pickTypeTable>[] = [
             <DropdownMenuItem
               onClick={async () => {
                 try {
-                  await deletePick({ id: pick.id });
+                  await deletePick({ id: pick.id, gameID: pick.game });
                   toast({
                     title: "Pick Deleted",
                     description: "Your pick has been deleted.",

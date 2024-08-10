@@ -120,14 +120,25 @@ export default function GameCard({
               onClick={async () => {
                 if (pick) {
                   try {
-                    const resp = await deletePick({ id: pick.id });
-                    setHomeTeamSelected(false);
-                    setAwayTeamSelected(false);
-                    toast({
-                      title: "Pick Deleted",
-                      description: "Your pick has been deleted.",
-                      variant: "destructive",
+                    const resp = await deletePick({
+                      id: pick.id,
+                      gameID: pick.game,
                     });
+                    if (resp.data?.error) {
+                      toast({
+                        title: "Pick NOT Deleted",
+                        description: resp.data.error,
+                        variant: "destructive",
+                      });
+                    } else {
+                      setHomeTeamSelected(false);
+                      setAwayTeamSelected(false);
+                      toast({
+                        title: "Pick Deleted",
+                        description: "Your pick has been deleted.",
+                        variant: "destructive",
+                      });
+                    }
                   } catch (error) {
                     toast({
                       title: "Server Error",
