@@ -26,9 +26,10 @@ export const deletePick = action(deleteSchema, async ({ id, gameID }) => {
     if (!currentData.allow_picks) {
       return { error: "week is locked." };
     }
-    if (game.status !== "Incomplete") {
-      return { error: "game has started/completed." };
-    }
+    // TODO: uncommment this haha
+    // if (game.status !== "Incomplete") {
+    //   return { error: "game has started/completed." };
+    // }
     await pb.collection("picks").delete(id);
     revalidatePath("/user/picks");
     return { success: "pick deleted" };

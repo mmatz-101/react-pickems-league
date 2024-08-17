@@ -3,6 +3,7 @@ import DataCollectionForm from "@/components/admin/data-collection-form";
 import UpdateResults from "@/components/admin/update-results";
 import { getPB } from "@/app/pocketbase";
 import { currentDataType } from "@/server/actions/admin/helpers/current-data";
+import LinkTeamsToGames from "@/components/admin/link-teams-to-games";
 
 export default async function AdminDashboard() {
   const pb = await getPB();
@@ -15,6 +16,7 @@ export default async function AdminDashboard() {
       <CurrentWeek currentWeek={currentData.week} />
       <DataCollectionForm />
       <UpdateResults />
+      <LinkTeamsToGames />
     </div>
   );
 }

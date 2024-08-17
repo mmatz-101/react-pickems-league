@@ -2,7 +2,6 @@
 
 import { UpdatePickResults } from "@/server/actions/admin/update-results";
 import { Button } from "../ui/button";
-import { useAction } from "next-safe-action/hooks";
 
 export default function UpdateResults() {
   return (

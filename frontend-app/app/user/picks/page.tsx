@@ -1,4 +1,4 @@
-import GameCard from "@/components/picks/game-card";
+import GameCard, { gameTypeExpanded } from "@/components/picks/game-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Toaster } from "@/components/ui/toaster";
 import { getPB } from "@/app/pocketbase";
@@ -11,15 +11,22 @@ export default async function PicksPage() {
   const currentData: currentDataType = await pb
     .collection("current")
     .getFirstListItem("");
-  const gamesNFLData: gameType[] = await pb.collection("games").getFullList({
-    filter: `week=${currentData.week} && league="NFL"`,
-  });
-  const gamesNCAAFData: gameType[] = await pb.collection("games").getFullList({
-    filter: `week=${currentData.week} && league="NCAAF"`,
-  });
+  const gamesNFLData: gameTypeExpanded[] = await pb
+    .collection("games")
+    .getFullList({
+      filter: `week=${currentData.week} && league="NFL"`,
+      expand: "home_team,away_team",
+    });
+  const gamesNCAAFData: gameTypeExpanded[] = await pb
+    .collection("games")
+    .getFullList({
+      filter: `week=${currentData.week} && league="NCAAF"`,
+      expand: "home_team,away_team",
+    });
   const currentPicks: pickType[] = await pb.collection("picks").getFullList({
     filter: `week=${currentData.week} && user="${pb.authStore.model!.id}"`,
   });
+  console.log(gamesNCAAFData);
   return (
     <>
       <h1>Picks Page</h1>

@@ -27,10 +27,10 @@ export const DataCollection = action(
           status: game.eventStatus,
           tvStation: game.tvStationName,
           stadium: game.stadium.stadium,
-          homeTeam: game.teams.home.names.abbreviation,
+          homeTeam: game.teams.home.names.name,
           homeSpread: game.teams.home.spread,
           homeScore: game.teams.home.score,
-          awayTeam: game.teams.away.names.abbreviation,
+          awayTeam: game.teams.away.names.name,
           awaySpread: game.teams.away.spread,
           awayScore: game.teams.away.score,
         };
@@ -88,4 +88,3 @@ export const DataCollection = action(
     return { success: "Data Collected" };
   },
 );
-

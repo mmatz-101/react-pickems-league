@@ -1,6 +1,6 @@
 "use client";
 
-import { gameType } from "@/server/actions/picks/helpers/game-data";
+import { gameType, teamType } from "@/server/actions/picks/helpers/game-data";
 import {
   Card,
   CardContent,
@@ -8,7 +8,7 @@ import {
   CardFooter,
   CardHeader,
 } from "../ui/card";
-import { BellRing, TrashIcon } from "lucide-react";
+import { BellRing, Images, TrashIcon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -25,12 +25,17 @@ import { z } from "zod";
 import { useToast } from "../ui/use-toast";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
 import { deletePick } from "@/server/actions/picks/delete-picks";
+import Image from "next/image";
+
+export interface gameTypeExpanded extends gameType {
+  expand: { home_team: teamType | null; away_team: teamType | null };
+}
 
 export default function GameCard({
   game,
   pick,
 }: {
-  game: gameType;
+  game: gameTypeExpanded;
   pick: pickType | undefined;
 }) {
   const [homeTeamSelected, setHomeTeamSelected] = useState(false);
@@ -106,6 +111,26 @@ export default function GameCard({
       });
     },
   });
+
+  // check if the home_team or away_team that was provided is null
+  let homeTeamImageValid = true;
+  let homeTeamImageSrc = "";
+  if (game.expand.home_team) {
+    if (!game.expand.home_team.image_src) {
+      homeTeamImageValid = false;
+    } else {
+      homeTeamImageSrc = game.expand.home_team.image_src;
+    }
+  }
+  let awayTeamImageValid = true;
+  let awayTeamImageSrc = "";
+  if (game.expand.away_team) {
+    if (!game.expand.away_team.image_src) {
+      awayTeamImageValid = false;
+    } else {
+      awayTeamImageSrc = game.expand.away_team.image_src.trim();
+    }
+  }
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Card>
@@ -164,7 +189,7 @@ export default function GameCard({
                 : "hover:bg-primary/5"
             }`}
           >
-            <BellRing />
+            <Image src={homeTeamImageSrc} alt="Logo" height={50} width={50} />
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium leading-none">
                 {game.home_name}
@@ -181,7 +206,7 @@ export default function GameCard({
                 : "hover:bg-primary/5"
             }`}
           >
-            <BellRing />
+            <Image src={awayTeamImageSrc} alt="Logo" height={50} width={50} />
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium leading-none">
                 {game.away_name}
