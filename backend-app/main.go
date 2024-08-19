@@ -57,7 +57,12 @@ func GetOddSharkData() {
 	leagueArr := []string{"nfl", "ncaaf"}
 	for _, league := range leagueArr {
 		// fetch the data from oddshark with the information from the current table
-		url := fmt.Sprintf(`https://www.oddsshark.com/api/scores/football/%s/%d/%d/?_format=json`, league, currentData.Year, currentData.Week)
+		var url string
+		if league == "nfl" {
+			url = fmt.Sprintf(`https://www.oddsshark.com/api/scores/football/%s/%d/%s/?_format=json`, league, currentData.Year, currentData.NFLWeekSearch)
+		} else {
+			url = fmt.Sprintf(`https://www.oddsshark.com/api/scores/football/%s/%d/%s/?_format=json`, league, currentData.Year, currentData.NCAAFWeekSearch)
+		}
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Println("Unable to fetch oddshark data.", err)

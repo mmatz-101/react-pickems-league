@@ -92,7 +92,7 @@ func UpdateGameData(game *GameData) error {
 		League:     game.League,
 		TvStation:  game.TvStation,
 		Week:       game.Week,
-		PickWinner: game.PickWinner,
+		PickWinner: GetGameWinner(game.Status, float32(game.HomeScore), game.HomeSpread, float32(game.AwayScore), game.AwaySpread),
 	}
 
 	jsonData, err := json.Marshal(reqBody)
@@ -134,7 +134,7 @@ func CreateGameData(game OddsSharkGame, league string, week int) error {
 		League:     strings.ToUpper(league),
 		TvStation:  game.TvStationName,
 		Week:       week,
-		PickWinner: GetGameWinner(game),
+		PickWinner: GetGameWinner(game.Status, float32(game.Teams.Home.Score), game.Teams.Home.Spread, float32(game.Teams.Away.Score), game.Teams.Away.Spread),
 	}
 
 	jsonData, err := json.Marshal(reqBody)
@@ -192,13 +192,13 @@ func GetTeamData(teamName string) (*TeamData, error) {
 }
 
 // GetGameWinner returns the winner of the game or empty string if the game isn't final
-func GetGameWinner(game OddsSharkGame) string {
-	if game.Status != "Final" {
+func GetGameWinner(status string, homeScore, homeSpread, awayScore, awaySpread float32) string {
+	if status != "FINAL" {
 		return ""
 	}
-	if float32(game.Teams.Home.Score)-game.Teams.Home.Spread > float32(game.Teams.Away.Score) {
+	if homeScore-homeSpread > awayScore {
 		return "HOME"
-	} else if float32(game.Teams.Away.Score)-game.Teams.Away.Spread > float32(game.Teams.Home.Score) {
+	} else if awayScore-awaySpread > homeScore {
 		return "AWAY"
 	} else {
 		return "PUSH"
