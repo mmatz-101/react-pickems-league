@@ -54,8 +54,6 @@ def update_team(abrv, display_name, name, nick_name, short_name, league):
         "league": league,
     }
 
-    print(team)
-
     team_id = get_team_id(name)
 
     resp = requests.patch(
