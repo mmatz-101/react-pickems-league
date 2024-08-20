@@ -6,16 +6,22 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/cron"
 )
 
-const PicksURL = "http://localhost:8090"
-
 func main() {
 	app := pocketbase.New()
+
+	// Get env variables
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		scheduler := cron.New()
@@ -122,7 +128,7 @@ func UpdatePicksResults() {
 	}
 
 	// get all the picks from the picks table in the database
-	url := fmt.Sprintf(PicksURL+"/api/collections/picks/records/?") + fmt.Sprintf("perPage=500&expand=game&filter=week=%d", currentData.Week)
+	url := fmt.Sprintf(os.Getenv("DB_URL")+"/api/collections/picks/records/?") + fmt.Sprintf("perPage=500&expand=game&filter=week=%d", currentData.Week)
 	fmt.Println(url)
 	resp, err := http.Get(url)
 	if err != nil {

@@ -5,3 +5,5 @@ backend-app/pb_data/
 # removing venv from git
 **/venv/
 
+# remove env varaibles
+.env

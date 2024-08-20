@@ -2,7 +2,10 @@ module mmatz-101/backend
 
 go 1.22.6
 
-require github.com/pocketbase/pocketbase v0.22.19
+require (
+	github.com/joho/godotenv v1.5.1
+	github.com/pocketbase/pocketbase v0.22.19
+)
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7 // indirect
