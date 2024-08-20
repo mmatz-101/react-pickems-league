@@ -61,7 +61,7 @@ func GetGameData(gameID string) (*GameData, error) {
 
 	defer resp.Body.Close()
 
-	record := GamesResponse{}
+	record := GamesDataResponse{}
 	jsonErr := json.NewDecoder(resp.Body).Decode(&record)
 	if jsonErr != nil {
 		return nil, jsonErr
@@ -203,4 +203,73 @@ func GetGameWinner(status string, homeScore, homeSpread, awayScore, awaySpread f
 	} else {
 		return "PUSH"
 	}
+}
+
+// UpdatePickData updates the pick data in the datebase
+func UpdatePickData(pick PickDataExpand) error {
+	jsonData, err := json.Marshal(pick)
+	if err != nil {
+		log.Fatalf("Error marshalling JSON: %v", err)
+	}
+
+	req, errReq := http.NewRequest(http.MethodPatch, fmt.Sprintf(PicksURL+"/api/collections/picks/records/%s", pick.ID), strings.NewReader(string(jsonData)))
+	if errReq != nil {
+		log.Println("Unable to create request.", errReq)
+		return errReq
+	}
+
+	dbErr := MakeRequest(req)
+	if dbErr != nil {
+		log.Println("Unable to make request.", dbErr)
+		return dbErr
+	}
+	return nil
+}
+
+// UpdatePickResult updates the pick struct based on the spread at the time of the pick
+func UpdatePickResult(pick PickDataExpand, currentData CurrentData) PickDataExpand {
+	// check the spread against the spread at the time of the pick not against the current pick line.
+	if pick.TeamSelected == "HOME" {
+		if pick.PickSpread-float32(pick.Expand.Game.HomeScore) > float32(pick.Expand.Game.AwayScore) {
+			pick.ResultPoints = currentData.RegularPointValue
+			pick.ResultText = "WIN"
+			if pick.PickType == "BINNY" {
+				pick.ResultPoints = currentData.BinnyPointValue
+			}
+		} else if pick.PickSpread-float32(pick.Expand.Game.HomeScore) == float32(pick.Expand.Game.AwayScore) {
+			pick.ResultPoints = currentData.RegularPointValue / 2
+			pick.ResultText = "PUSH"
+			if pick.PickType == "BINNY" {
+				pick.ResultPoints = 0
+			}
+		} else {
+			pick.ResultPoints = 0
+			pick.ResultText = "LOST"
+			if pick.PickType == "BINNY" {
+				pick.ResultPoints = -currentData.BinnyPointValue
+			}
+		}
+	} else if pick.TeamSelected == "AWAY" {
+		if pick.PickSpread-float32(pick.Expand.Game.AwayScore) > float32(pick.Expand.Game.HomeScore) {
+			pick.ResultPoints = currentData.RegularPointValue
+			pick.ResultText = "WIN"
+			if pick.PickType == "BINNY" {
+				pick.ResultPoints = currentData.BinnyPointValue
+			}
+		} else if pick.PickSpread-float32(pick.Expand.Game.AwayScore) == float32(pick.Expand.Game.HomeScore) {
+			pick.ResultPoints = currentData.RegularPointValue / 2
+			pick.ResultText = "PUSH"
+			if pick.PickType == "BINNY" {
+				pick.ResultPoints = 0
+			}
+		} else {
+			pick.ResultPoints = 0
+			pick.ResultText = "LOST"
+			if pick.PickType == "BINNY" {
+				pick.ResultPoints = -currentData.BinnyPointValue
+			}
+		}
+	}
+
+	return pick
 }

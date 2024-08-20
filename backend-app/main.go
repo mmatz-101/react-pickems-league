@@ -27,6 +27,7 @@ func main() {
 
 		// GetOddSharkData is a function that fetches data from OddShark and stores the data into the games table of the database.
 		scheduler.MustAdd("get-oddshark-data", "*/1 * * * *", GetOddSharkData)
+		scheduler.MustAdd("update-picks-results", "*/1 * * * *", UpdatePicksResults)
 
 		scheduler.Start()
 
@@ -102,6 +103,58 @@ func GetOddSharkData() {
 					return
 				}
 			}
+		}
+	}
+}
+
+// UpdatePicksResults
+func UpdatePicksResults() {
+	// get the current data from the current table in database
+	currentData, err := GetCurrentData()
+	if err != nil {
+		log.Println("Unable to get current data.", err)
+		return
+	}
+	// If the update results is disabled, return
+	if !currentData.UpdateResults {
+		log.Println("Update results is disabled.")
+		return
+	}
+
+	// get all the picks from the picks table in the database
+	url := fmt.Sprintf(PicksURL+"/api/collections/picks/records/?") + fmt.Sprintf("perPage=500&expand=game&filter=week=%d", currentData.Week)
+	fmt.Println(url)
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Println("Unable to get games data.", err)
+		return
+	}
+
+	defer resp.Body.Close()
+
+	picksData := PickDataExpandResponse{}
+	if newErr := json.NewDecoder(resp.Body).Decode(&picksData); newErr != nil {
+		log.Println("Unable to parse picks response body.", newErr)
+		return
+	}
+
+	if picksData.TotalPages != 1 {
+		log.Fatal("Total picks per page is too big for this function. Need addional steps.")
+	}
+
+	// loop through PickDataResponse.Items and update the picks table in the database
+	for _, pick := range picksData.Items {
+		// check if the game is FINAL
+		if pick.Expand.Game.Status != "FINAL" {
+			continue
+		}
+
+		pick = UpdatePickResult(pick, *currentData)
+		// update the pick in the database
+		err = UpdatePickData(pick)
+		if err != nil {
+			log.Println("Error updating pick:", pick.ID, err)
+			return
 		}
 	}
 }
