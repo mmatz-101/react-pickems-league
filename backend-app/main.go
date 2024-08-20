@@ -138,7 +138,7 @@ func UpdatePicksResults() {
 		return
 	}
 
-	if picksData.TotalPages != 1 {
+	if picksData.TotalPages > 1 {
 		log.Fatal("Total picks per page is too big for this function. Need addional steps.")
 	}
 
