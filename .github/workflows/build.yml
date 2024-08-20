@@ -16,9 +16,15 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5.0.2
         with:
+          # The Go version to download (if necessary) and use. Supports semver spec and ranges. Be sure to enclose this option in single quotation marks.
+          go-version: 1.22.6
+          # Path to the go.mod or go.work file.
+          go-version-file: ./backend-app/go.mod
           # Set this option to true if you want the action to always check for the latest available version that satisfies the version spec
           check-latest: true
+          # Used to specify the path to a dependency file - go.sum
+          cache-dependency-path: ./backend-app/go.sum         
       
       - name: Build
-        run: go build ./backend/.
+        run: go build ./backend-app/backend .
           
