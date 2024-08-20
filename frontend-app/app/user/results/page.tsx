@@ -1,6 +1,7 @@
 import { getPB } from "@/app/pocketbase";
 import { ResultDataTable } from "./result-data-table";
 import { resultColumns, resultColumnsType } from "./result-columns";
+import Navbar from "@/components/navbar/navbar";
 
 export default async function ResultPage() {
   const pb = await getPB();
@@ -9,8 +10,8 @@ export default async function ResultPage() {
     .getFullList({ sort: "-result_points", expand: "user" });
   return (
     <>
-      <h1>Result Page</h1>
-      <h2>table with all the information on the scores</h2>
+      <Navbar />
+      <h1 className="text-xl p-4">Results Page</h1>
       <ResultDataTable columns={resultColumns} data={resultData} />
     </>
   );

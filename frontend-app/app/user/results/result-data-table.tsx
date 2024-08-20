@@ -42,7 +42,7 @@ export function ResultDataTable<TData, TValue>({
   });
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border px-6">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

@@ -8,7 +8,7 @@ import {
   CardFooter,
   CardHeader,
 } from "../ui/card";
-import { BellRing, Images, TrashIcon } from "lucide-react";
+import { TrashIcon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -133,51 +133,51 @@ export default function GameCard({
   }
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <Card>
+      <Card className="flex-auto">
         <CardHeader>
           <CardDescription className="flex justify-between content-center">
             <span className="flex flex-col">
               <span>{game.tv_station}</span>
               <span>{game.date}</span>
             </span>
-            <Button
-              className={pick ? "" : "invisible"}
-              onClick={async () => {
-                if (pick) {
-                  try {
-                    const resp = await deletePick({
-                      id: pick.id,
-                      gameID: pick.game,
-                    });
-                    if (resp.data?.error) {
-                      toast({
-                        title: "Pick NOT Deleted",
-                        description: resp.data.error,
-                        variant: "destructive",
-                      });
-                    } else {
-                      setHomeTeamSelected(false);
-                      setAwayTeamSelected(false);
-                      toast({
-                        title: "Pick Deleted",
-                        description: "Your pick has been deleted.",
-                        variant: "destructive",
-                      });
-                    }
-                  } catch (error) {
-                    toast({
-                      title: "Server Error",
-                      description: "Try refreshing the page.",
-                      variant: "destructive",
-                    });
-                  }
-                }
-              }}
-              size={"icon"}
-              variant={"destructive"}
-            >
-              <TrashIcon />
-            </Button>
+            {/* <Button */}
+            {/*   className={pick ? "" : "invisible"} */}
+            {/*   onClick={async () => { */}
+            {/*     if (pick) { */}
+            {/*       try { */}
+            {/*         const resp = await deletePick({ */}
+            {/*           id: pick.id, */}
+            {/*           gameID: pick.game, */}
+            {/*         }); */}
+            {/*         if (resp.data?.error) { */}
+            {/*           toast({ */}
+            {/*             title: "Pick NOT Deleted", */}
+            {/*             description: resp.data.error, */}
+            {/*             variant: "destructive", */}
+            {/*           }); */}
+            {/*         } else { */}
+            {/*           setHomeTeamSelected(false); */}
+            {/*           setAwayTeamSelected(false); */}
+            {/*           toast({ */}
+            {/*             title: "Pick Deleted", */}
+            {/*             description: "Your pick has been deleted.", */}
+            {/*             variant: "destructive", */}
+            {/*           }); */}
+            {/*         } */}
+            {/*       } catch (error) { */}
+            {/*         toast({ */}
+            {/*           title: "Server Error", */}
+            {/*           description: "Try refreshing the page.", */}
+            {/*           variant: "destructive", */}
+            {/*         }); */}
+            {/*       } */}
+            {/*     } */}
+            {/*   }} */}
+            {/*   size={"icon"} */}
+            {/*   variant={"destructive"} */}
+            {/* > */}
+            {/*   <TrashIcon /> */}
+            {/* </Button> */}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">

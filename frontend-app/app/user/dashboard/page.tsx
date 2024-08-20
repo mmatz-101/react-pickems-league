@@ -41,9 +41,9 @@ export default async function DashboardPage() {
     return (
       <div>
         <Navbar />
-        <h1>User Dashboard</h1>
-        <p>{pb.authStore.model!.first_name}</p>
-        <div className="flex gap-4 py-4">
+        <h1 className="text-xl p-4">User Dashboard</h1>
+        <p className="text-lg px-4">{pb.authStore.model!.first_name}</p>
+        <div className="flex gap-4 py-4 justify-center">
           {/* TODO: Potentially convert this to a component card */}
           <Card className="max-w-md flex-grow">
             <CardHeader>Week {currentData.week} Regular Picks</CardHeader>
@@ -96,33 +96,34 @@ export default async function DashboardPage() {
           </Card>
         </div>
         {weekArray.map((week) => (
-          <Accordion
-            className="max-w-5xl justify-center"
-            type="single"
-            collapsible
-            key={week}
-            defaultValue="item-0"
-          >
-            <AccordionItem
-              value={week === currentData.week ? "item-0" : "item-1"}
+          <div className="flex items-center justify-center" key={week}>
+            <Accordion
+              className="max-w-5xl flex-auto"
+              type="single"
+              collapsible
+              defaultValue="item-0"
             >
-              <AccordionTrigger>Week {week}</AccordionTrigger>
-              <AccordionContent>
-                <div className="container mx-auto py-10 sm:block md:hidden">
-                  <DataTable
-                    columns={mobileColumns}
-                    data={picks.filter((pick) => pick.week === week)}
-                  />
-                </div>
-                <div className="container mx-auto py-10 hidden md:block">
-                  <DataTable
-                    columns={columns}
-                    data={picks.filter((pick) => pick.week === week)}
-                  />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              <AccordionItem
+                value={week === currentData.week ? "item-0" : "item-1"}
+              >
+                <AccordionTrigger>Week {week}</AccordionTrigger>
+                <AccordionContent>
+                  <div className="container mx-auto py-10 sm:block md:hidden">
+                    <DataTable
+                      columns={mobileColumns}
+                      data={picks.filter((pick) => pick.week === week)}
+                    />
+                  </div>
+                  <div className="container mx-auto py-10 hidden md:block">
+                    <DataTable
+                      columns={columns}
+                      data={picks.filter((pick) => pick.week === week)}
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
         ))}
 
         <Toaster />

@@ -11,7 +11,7 @@ import { currentDataType } from "@/server/actions/admin/helpers/current-data";
 import { gameType } from "@/server/actions/picks/helpers/game-data";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
 import { userType } from "@/server/actions/picks/helpers/user-data";
-import { redirect } from "next/navigation";
+import Navbar from "@/components/navbar/navbar";
 
 interface pickTypeQuery extends pickType {
   expand: { game: gameType; user: userType };
@@ -37,38 +37,41 @@ export default async function LeaguePicksPage() {
 
     return (
       <>
-        <h1>League Picks Page</h1>
-        <h2>table with all the information on the scores</h2>
+        <Navbar />
+        <h1 className="text-xl p-4">League Picks Page</h1>
+        <p className="text-lg px-4">Week {currentData.week} </p>
         {uniqueNames.map((name: string) => (
-          <Accordion
-            className="max-w-5xl justify-center"
-            type="single"
-            collapsible
-            key={currentData.week}
-            defaultValue="item-0"
-          >
-            <AccordionItem value={name}>
-              <AccordionTrigger>{name}</AccordionTrigger>
-              <AccordionContent>
-                <div className="container mx-auto py-10 sm:block md:hidden">
-                  <DataTable
-                    columns={mobileColumns}
-                    data={picks.filter(
-                      (pick) => pick.expand.user.first_name === name,
-                    )}
-                  />
-                </div>
-                <div className="container mx-auto py-10 hidden md:block">
-                  <DataTable
-                    columns={columns}
-                    data={picks.filter(
-                      (pick) => pick.expand.user.first_name === name,
-                    )}
-                  />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          <div className="flex justify-center" key={name}>
+            <Accordion
+              className="max-w-5xl py-2 px-6 flex-auto"
+              type="single"
+              collapsible
+              key={currentData.week}
+              defaultValue="item-0"
+            >
+              <AccordionItem value={"item-0"}>
+                <AccordionTrigger>{name}</AccordionTrigger>
+                <AccordionContent>
+                  <div className="container mx-auto py-10 sm:block md:hidden">
+                    <DataTable
+                      columns={mobileColumns}
+                      data={picks.filter(
+                        (pick) => pick.expand.user.first_name === name,
+                      )}
+                    />
+                  </div>
+                  <div className="container mx-auto py-10 hidden md:block">
+                    <DataTable
+                      columns={columns}
+                      data={picks.filter(
+                        (pick) => pick.expand.user.first_name === name,
+                      )}
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
         ))}
       </>
     );

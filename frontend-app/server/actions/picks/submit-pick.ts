@@ -112,7 +112,6 @@ export const submitPick = action(
     } else {
       pickSpread = gameData.away_spread;
     }
-    console.log(pickSpread);
     // attempty to create/update picks
     try {
       if (id) {
