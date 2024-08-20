@@ -23,8 +23,10 @@ jobs:
           # Set this option to true if you want the action to always check for the latest available version that satisfies the version spec
           check-latest: true
           # Used to specify the path to a dependency file - go.sum
-          cache-dependency-path: ./backend-app/go.sum         
-      
+          cache-dependency-path: ./backend-app/go.sum
       - name: Build
-        run: go build ./backend-app/backend .
+        run: |
+          cd ./backend-app  # Ensure you are in the correct directory
+          go build ./.
+      
           
