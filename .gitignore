@@ -1,2 +1,7 @@
+# removing pb_data from git
 pb_data/
 backend-app/pb_data/
+
+# removing venv from git
+**/venv/
+
