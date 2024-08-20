@@ -48,6 +48,14 @@ func GetCurrentData() (*CurrentData, error) {
 		return nil, jsonErr
 	}
 
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("Error getting current data: %d", resp.StatusCode)
+	}
+
+	if len(data.Items) == 0 {
+		return nil, fmt.Errorf("No current data found in DB.")
+	}
+
 	return &data.Items[0], nil
 }
 
