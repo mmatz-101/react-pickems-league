@@ -105,6 +105,14 @@ export const submitPick = action(
     } else {
       favOrUnd = "UND";
     }
+
+    let pickSpread = 0;
+    if (teamSelected === "HOME") {
+      pickSpread = gameData.home_spread;
+    } else {
+      pickSpread = gameData.away_spread;
+    }
+    console.log(pickSpread);
     // attempty to create/update picks
     try {
       if (id) {
@@ -115,6 +123,7 @@ export const submitPick = action(
           week: currentData.week,
           team_selected: teamSelected,
           pick_type: pickType,
+          pick_spread: pickSpread,
           fav_or_und: favOrUnd,
         });
         revalidatePath("/user/picks");
@@ -127,6 +136,7 @@ export const submitPick = action(
           week: currentData.week,
           team_selected: teamSelected,
           pick_type: pickType,
+          pick_spread: pickSpread,
           fav_or_und: favOrUnd,
         });
         revalidatePath("/user/picks");

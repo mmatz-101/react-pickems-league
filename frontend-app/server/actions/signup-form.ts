@@ -2,6 +2,7 @@
 
 import { getPB } from "@/app/pocketbase";
 import { action } from "@/lib/safe-action";
+import { redirect } from "next/navigation";
 import { SignupSchema } from "@/schema/signup-schema";
 
 export const SignupUser = action(
@@ -18,17 +19,17 @@ export const SignupUser = action(
         last_name: lastName,
       };
 
-      const pb = getPB();
+      const pb = await getPB();
 
       const record = await pb.collection("users").create(userData);
 
       // send an email verification request
       await pb.collection("users").requestVerification(email);
-
-      return { success: "User created successfully", record };
     } catch (error) {
       console.log(error);
       return { error: "User creation failed" };
     }
+    // redirect cannot be inside try and catch block
+    redirect("/login");
   },
 );

@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Toaster } from "@/components/ui/toaster";
 import { getPB } from "@/app/pocketbase";
+import Navbar from "@/components/navbar/navbar";
 
 interface pickTypeQuery extends pickType {
   expand: { game: gameType };
@@ -39,6 +40,7 @@ export default async function DashboardPage() {
     // TODO: Figure out what to do with the week
     return (
       <div>
+        <Navbar />
         <h1>User Dashboard</h1>
         <p>{pb.authStore.model!.first_name}</p>
         <div className="flex gap-4 py-4">

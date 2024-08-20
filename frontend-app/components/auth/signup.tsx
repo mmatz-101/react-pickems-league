@@ -28,7 +28,7 @@ export default function SignupComponent() {
     },
   });
 
-  const { execute, result } = useAction(SignupUser);
+  const { execute } = useAction(SignupUser);
 
   function onSubmit(values: z.infer<typeof SignupSchema>) {
     execute(values);

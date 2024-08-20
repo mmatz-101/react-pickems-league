@@ -3,7 +3,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Toaster } from "@/components/ui/toaster";
 import { getPB } from "@/app/pocketbase";
 import { currentDataType } from "@/server/actions/admin/helpers/current-data";
-import { gameType } from "@/server/actions/picks/helpers/game-data";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
 
 export default async function PicksPage() {
@@ -26,7 +25,6 @@ export default async function PicksPage() {
   const currentPicks: pickType[] = await pb.collection("picks").getFullList({
     filter: `week=${currentData.week} && user="${pb.authStore.model!.id}"`,
   });
-  console.log(gamesNCAAFData);
   return (
     <>
       <h1>Picks Page</h1>
