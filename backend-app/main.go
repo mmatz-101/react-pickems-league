@@ -6,29 +6,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/cron"
 )
 
+const DB_URL = "http://db.pickemsleague.com"
+
 func main() {
 	app := pocketbase.New()
-
-	// Get env variables
-	err := godotenv.Load("/root/react-pickems-league/backend-app/")
-	if err != nil {
-		entries, err := os.ReadDir("./")
-		if err != nil {
-			log.Fatal("Error reading directory.", err)
-		}
-		log.Println(entries)
-		if err != nil {
-			log.Fatal("Error loading .env file", err)
-		}
-	}
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		scheduler := cron.New()
@@ -135,7 +122,7 @@ func UpdatePicksResults() {
 	}
 
 	// get all the picks from the picks table in the database
-	url := fmt.Sprintf(os.Getenv("DB_URL")+"/api/collections/picks/records/?") + fmt.Sprintf("perPage=500&expand=game&filter=week=%d", currentData.Week)
+	url := fmt.Sprintf(DB_URL+"/api/collections/picks/records/?") + fmt.Sprintf("perPage=500&expand=game&filter=week=%d", currentData.Week)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Println("Unable to get games data.", err)

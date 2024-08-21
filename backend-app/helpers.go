@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 )
@@ -27,7 +26,7 @@ func MakeRequest(req *http.Request) error {
 // GetCurrentData fetches the current data from the database server
 func GetCurrentData() (*CurrentData, error) {
 	// collect the id of the currentData
-	resp, err := http.Get(os.Getenv("DB_URL") + "/api/collections/current/records")
+	resp, err := http.Get(DB_URL + "/api/collections/current/records")
 	if err != nil {
 		log.Println("Unable to get current table from database server error.")
 		return nil, err
@@ -63,7 +62,7 @@ func GetCurrentData() (*CurrentData, error) {
 // GetGame fetches the game data from the ID of the game. Will return nil, nil if there were no errors
 // and the game was not found.
 func GetGameData(gameID string) (*GameData, error) {
-	resp, err := http.Get(fmt.Sprintf(os.Getenv("DB_URL")+`/api/collections/games/records/?filter=game_id="%s"`, gameID))
+	resp, err := http.Get(fmt.Sprintf(DB_URL+`/api/collections/games/records/?filter=game_id="%s"`, gameID))
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +110,7 @@ func UpdateGameData(game OddsSharkGame, league string, week int, gameID string) 
 		log.Fatalf("Error marshalling JSON: %v", err)
 		return err
 	}
-	req, errReq := http.NewRequest(http.MethodPatch, fmt.Sprintf(os.Getenv("DB_URL")+"/api/collections/games/records/%s", gameID), strings.NewReader(string(jsonData)))
+	req, errReq := http.NewRequest(http.MethodPatch, fmt.Sprintf(DB_URL+"/api/collections/games/records/%s", gameID), strings.NewReader(string(jsonData)))
 	if errReq != nil {
 		log.Println("Unable to create request.", errReq)
 		return errReq
@@ -153,7 +152,7 @@ func CreateGameData(game OddsSharkGame, league string, week int) error {
 		log.Fatalf("Error marshalling JSON: %v", err)
 		return err
 	}
-	req, errReq := http.NewRequest(http.MethodPost, os.Getenv("DB_URL")+"/api/collections/games/records", strings.NewReader(string(jsonData)))
+	req, errReq := http.NewRequest(http.MethodPost, DB_URL+"/api/collections/games/records", strings.NewReader(string(jsonData)))
 	if errReq != nil {
 		log.Println("Unable to create request.", errReq)
 		return errReq
@@ -182,7 +181,7 @@ func GetTeamID(teamName string) string {
 
 // GetTeamData fetches the team data from the team server
 func GetTeamData(teamName string) (*TeamData, error) {
-	url := os.Getenv("DB_URL") + "/api/collections/teams/records/" + "?filter=(" + url.QueryEscape(fmt.Sprintf(`name="%s"`, teamName)) + ")"
+	url := DB_URL + "/api/collections/teams/records/" + "?filter=(" + url.QueryEscape(fmt.Sprintf(`name="%s"`, teamName)) + ")"
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -223,7 +222,7 @@ func UpdatePickData(pick PickDataExpand) error {
 		log.Fatalf("Error marshalling JSON: %v", err)
 	}
 
-	req, errReq := http.NewRequest(http.MethodPatch, fmt.Sprintf(os.Getenv("DB_URL")+"/api/collections/picks/records/%s", pick.ID), strings.NewReader(string(jsonData)))
+	req, errReq := http.NewRequest(http.MethodPatch, fmt.Sprintf(DB_URL+"/api/collections/picks/records/%s", pick.ID), strings.NewReader(string(jsonData)))
 	if errReq != nil {
 		log.Println("Unable to create request.", errReq)
 		return errReq
