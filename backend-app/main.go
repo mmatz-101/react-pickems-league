@@ -20,6 +20,11 @@ func main() {
 	// Get env variables
 	err := godotenv.Load("./.env")
 	if err != nil {
+		entries, err := os.ReadDir("./")
+		if err != nil {
+			log.Fatal("Error reading directory.", err)
+		}
+		log.Println(entries)
 		log.Fatal("Error loading .env file", err)
 	}
 
