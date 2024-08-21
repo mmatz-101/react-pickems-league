@@ -50,11 +50,11 @@ func GetCurrentData() (*CurrentData, error) {
 	}
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Error getting current data: %d", resp.StatusCode)
+		return nil, fmt.Errorf("error getting current data: %d", resp.StatusCode)
 	}
 
 	if len(data.Items) == 0 {
-		return nil, fmt.Errorf("No current data found in DB.")
+		return nil, fmt.Errorf("no current data found in database")
 	}
 
 	return &data.Items[0], nil
