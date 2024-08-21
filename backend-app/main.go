@@ -129,7 +129,6 @@ func UpdatePicksResults() {
 
 	// get all the picks from the picks table in the database
 	url := fmt.Sprintf(os.Getenv("DB_URL")+"/api/collections/picks/records/?") + fmt.Sprintf("perPage=500&expand=game&filter=week=%d", currentData.Week)
-	fmt.Println(url)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Println("Unable to get games data.", err)

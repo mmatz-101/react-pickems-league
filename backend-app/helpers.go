@@ -45,10 +45,7 @@ func GetCurrentData() (*CurrentData, error) {
 	data := CurrentDataResponse{}
 	jsonErr := json.Unmarshal(body, &data)
 	if jsonErr != nil {
-		// convert body to string for logging
-		bodyStr := string(body)
-		log.Println("Unable to parse response body.", jsonErr, bodyStr)
-		// log.Println("Unable to parse response body.", jsonErr)
+		log.Println("Unable to parse response body.", jsonErr)
 		return nil, jsonErr
 	}
 
