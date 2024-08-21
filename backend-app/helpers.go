@@ -88,7 +88,7 @@ func UpdateGameData(game OddsSharkGame, league string, week int, gameID string) 
 	date := time.Unix(game.Date, 0)
 	formattedDate := date.Format("2006-01-02 15:04:05Z")
 	reqBody := GameDataRequestBody{
-		GameID:     string(game.GameID),
+		GameID:     fmt.Sprintf("%d", game.GameID),
 		Date:       formattedDate,
 		Stadium:    game.StadiumInfo.Name,
 		Status:     game.Status,
