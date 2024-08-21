@@ -84,7 +84,7 @@ func GetGameData(gameID string) (*GameData, error) {
 }
 
 // UpdateGameData updates the game's data in the games database
-func UpdateGameData(game *OddsSharkGame, league string, week int) error {
+func UpdateGameData(game OddsSharkGame, league string, week int, gameID string) error {
 	date := time.Unix(game.Date, 0)
 	formattedDate := date.Format("2006-01-02 15:04:05Z")
 	reqBody := GameDataRequestBody{
@@ -111,7 +111,7 @@ func UpdateGameData(game *OddsSharkGame, league string, week int) error {
 		log.Fatalf("Error marshalling JSON: %v", err)
 		return err
 	}
-	req, errReq := http.NewRequest(http.MethodPatch, fmt.Sprintf(os.Getenv("DB_URL")+"/api/collections/games/records/%s", game.ID), strings.NewReader(string(jsonData)))
+	req, errReq := http.NewRequest(http.MethodPatch, fmt.Sprintf(os.Getenv("DB_URL")+"/api/collections/games/records/%s", gameID), strings.NewReader(string(jsonData)))
 	if errReq != nil {
 		log.Println("Unable to create request.", errReq)
 		return errReq

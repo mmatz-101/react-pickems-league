@@ -95,7 +95,7 @@ func GetOddSharkData() {
 			}
 			// update the game if it already exists
 			if existingGame != nil {
-				err = UpdateGameData(existingGame)
+				err = UpdateGameData(game, league, currentData.Week, existingGame.GameID)
 				if err != nil {
 					log.Println("Error updating game:", existingGame.GameID, err)
 					return
