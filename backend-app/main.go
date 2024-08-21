@@ -12,7 +12,7 @@ import (
 	"github.com/pocketbase/pocketbase/tools/cron"
 )
 
-const DB_URL = "http://db.pickemsleague.com"
+const DB_URL = "https://db.pickemsleague.com"
 
 func main() {
 	app := pocketbase.New()
