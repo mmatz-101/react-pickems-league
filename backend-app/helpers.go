@@ -84,24 +84,26 @@ func GetGameData(gameID string) (*GameData, error) {
 }
 
 // UpdateGameData updates the game's data in the games database
-func UpdateGameData(game *GameData) error {
+func UpdateGameData(game *OddsSharkGame, league string, week int) error {
+	date := time.Unix(game.Date, 0)
+	formattedDate := date.Format("2006-01-02 15:04:05Z")
 	reqBody := GameDataRequestBody{
-		GameID:     game.GameID,
-		Date:       game.Date,
-		Stadium:    game.Stadium,
+		GameID:     string(game.GameID),
+		Date:       formattedDate,
+		Stadium:    game.StadiumInfo.Name,
 		Status:     game.Status,
-		HomeSpread: game.HomeSpread,
-		AwaySpread: game.AwaySpread,
-		HomeTeam:   GetTeamID(game.HomeName),
-		HomeName:   game.HomeName,
-		AwayTeam:   GetTeamID(game.AwayName),
-		AwayName:   game.AwayName,
-		HomeScore:  game.HomeScore,
-		AwayScore:  game.AwayScore,
-		League:     game.League,
-		TvStation:  game.TvStation,
-		Week:       game.Week,
-		PickWinner: GetGameWinner(game.Status, float32(game.HomeScore), game.HomeSpread, float32(game.AwayScore), game.AwaySpread),
+		HomeSpread: game.Teams.Home.Spread,
+		AwaySpread: game.Teams.Away.Spread,
+		HomeTeam:   GetTeamID(game.Teams.Home.Names.Name),
+		HomeName:   game.Teams.Home.Names.Name,
+		AwayTeam:   GetTeamID(game.Teams.Away.Names.Name),
+		AwayName:   game.Teams.Away.Names.Name,
+		HomeScore:  game.Teams.Home.Score,
+		AwayScore:  game.Teams.Away.Score,
+		League:     strings.ToUpper(league),
+		TvStation:  game.TvStationName,
+		Week:       week,
+		PickWinner: GetGameWinner(game.Status, float32(game.Teams.Home.Score), game.Teams.Home.Spread, float32(game.Teams.Away.Score), game.Teams.Away.Spread),
 	}
 
 	jsonData, err := json.Marshal(reqBody)
