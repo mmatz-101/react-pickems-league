@@ -9,10 +9,13 @@ export default async function SignupPage() {
   if (pb.authStore.isValid) {
     redirect("/user/dashboard");
   }
+
   return (
-    <div>
-      <h1>Signup</h1>
-      <SignupComponent />
+    <div className="flex-1 flex-col items-center justify-center h-full py-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-xl py-4">Signup</h1>
+        <SignupComponent />
+      </div>
     </div>
   );
 }

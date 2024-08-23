@@ -10,6 +10,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { LoginSchema } from "@/schema/login-schema";
 import { LoginUser } from "@/server/actions/login-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +18,8 @@ import { useAction } from "next-safe-action/hooks";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { FormError } from "../form/form-error";
+import { useState } from "react";
 
 export default function LoginComponent() {
   const form = useForm<z.infer<typeof LoginSchema>>({
@@ -27,14 +30,12 @@ export default function LoginComponent() {
     },
   });
 
-  const router = useRouter();
-
-  const { execute } = useAction(LoginUser, {
-    onSuccess: () => {
-      router.push("/user/dashboard");
-    },
-    onError: () => {
-      console.log("login failed");
+  const [error, setError] = useState("");
+  const { execute, status } = useAction(LoginUser, {
+    onSuccess(data) {
+      if (data?.error) {
+        setError(data.error);
+      }
     },
   });
 
@@ -44,35 +45,46 @@ export default function LoginComponent() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="Email" type="email" {...field} />
-              </FormControl>
-              <FormDescription></FormDescription>
-              <FormMessage></FormMessage>
-            </FormItem>
+        <div>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="Email" type="email" {...field} />
+                </FormControl>
+                <FormDescription></FormDescription>
+                <FormMessage></FormMessage>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input placeholder="Password" type="password" {...field} />
+                </FormControl>
+                <FormDescription></FormDescription>
+                <FormMessage></FormMessage>
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormError message={error} />
+        <Button
+          type="submit"
+          className={cn(
+            "w-full my-2",
+            status === "executing" ? "animate-pulse" : "",
           )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input placeholder="Password" type="password" {...field} />
-              </FormControl>
-              <FormDescription></FormDescription>
-              <FormMessage></FormMessage>
-            </FormItem>
-          )}
-        />
-        <Button type="submit">Login</Button>
+        >
+          {"Create Account"}
+        </Button>
       </form>
     </Form>
   );
