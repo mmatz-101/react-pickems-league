@@ -43,9 +43,9 @@ export default async function DashboardPage() {
         <Navbar />
         <h1 className="text-xl p-4">User Dashboard</h1>
         <p className="text-lg px-4">{pb.authStore.model!.first_name}</p>
-        <div className="flex gap-4 py-4 justify-center">
+        <div className="flex flex-col gap-4 p-4 sm:justify-center items-center sm:flex-row">
           {/* TODO: Potentially convert this to a component card */}
-          <Card className="max-w-md flex-grow">
+          <Card className="max-w-md w-full">
             <CardHeader>Week {currentData.week} Regular Picks</CardHeader>
             <CardContent>
               {
@@ -69,7 +69,7 @@ export default async function DashboardPage() {
               />
             </CardContent>
           </Card>
-          <Card className="max-w-md flex-grow">
+          <Card className="max-w-md w-full">
             <CardHeader>Week {currentData.week} Binny Picks</CardHeader>
             <CardContent>
               {
@@ -96,19 +96,20 @@ export default async function DashboardPage() {
           </Card>
         </div>
         {weekArray.map((week) => (
-          <div className="flex items-center justify-center" key={week}>
+          <div className="" key={week}>
             <Accordion
-              className="max-w-5xl flex-auto"
+              className=""
               type="single"
               collapsible
               defaultValue="item-0"
             >
               <AccordionItem
+                className="px-4 py-2"
                 value={week === currentData.week ? "item-0" : "item-1"}
               >
                 <AccordionTrigger>Week {week}</AccordionTrigger>
                 <AccordionContent>
-                  <div className="container mx-auto py-10 sm:block md:hidden">
+                  <div className="container px-2 py-10 sm:block md:hidden">
                     <DataTable
                       columns={mobileColumns}
                       data={picks.filter((pick) => pick.week === week)}
