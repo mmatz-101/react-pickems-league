@@ -1,6 +1,15 @@
+"use client";
+
+import { LogoutUser } from "@/server/actions/logout";
 import { Calendar, LogOutIcon, MousePointer, Trophy, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function Navbar() {
   return (
@@ -49,6 +58,22 @@ export default function Navbar() {
           <Trophy size={16} className="mr-1" />
           Results
         </Link>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <LogOutIcon
+                size={16}
+                className="text-sm font-medium text-muted-foreground hover:text-foreground hover:cursor-pointer"
+                onClick={async () => {
+                  await LogoutUser({});
+                }}
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Logout</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </nav>
     </header>
   );
