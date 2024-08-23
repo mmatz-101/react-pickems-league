@@ -1,3 +1,4 @@
+import { VercelToolbar } from "@vercel/toolbar/next";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
@@ -16,12 +17,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const shouldInjectToolbar = process.env.NODE_ENV === "development";
   return (
     <html lang="en">
       <body className={inter.className}>
         {children}
         <SpeedInsights />
         <Analytics />
+        {shouldInjectToolbar && <VercelToolbar />}
       </body>
     </html>
   );
