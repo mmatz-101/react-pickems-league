@@ -8,7 +8,6 @@ import {
   CardFooter,
   CardHeader,
 } from "../ui/card";
-import { TrashIcon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -24,12 +23,22 @@ import { ReturnInfo, submitPick } from "@/server/actions/picks/submit-pick";
 import { z } from "zod";
 import { useToast } from "../ui/use-toast";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
-import { deletePick } from "@/server/actions/picks/delete-picks";
 import Image from "next/image";
+import { format, parseISO } from "date-fns";
 
 export interface gameTypeExpanded extends gameType {
   expand: { home_team: teamType | null; away_team: teamType | null };
 }
+
+const gameDateDisplay: (dateString: string) => string = (dateString) => {
+  // Parse the ISO date string into a Date object
+  const date = parseISO(dateString);
+
+  // Format the Date object into a readable string
+  const formattedDate = format(date, "MMMM d, h:mm a");
+
+  return formattedDate;
+};
 
 export default function GameCard({
   game,
@@ -137,47 +146,11 @@ export default function GameCard({
         <CardHeader>
           <CardDescription className="flex justify-between content-center">
             <span className="flex flex-col">
-              <span>{game.tv_station}</span>
-              <span>{game.date}</span>
+              <span>{game.tv_station ? game.tv_station : "hidden"}</span>
+              <span>
+                {game.status != "FINAL" ? gameDateDisplay(game.date) : "FINAL"}
+              </span>
             </span>
-            {/* <Button */}
-            {/*   className={pick ? "" : "invisible"} */}
-            {/*   onClick={async () => { */}
-            {/*     if (pick) { */}
-            {/*       try { */}
-            {/*         const resp = await deletePick({ */}
-            {/*           id: pick.id, */}
-            {/*           gameID: pick.game, */}
-            {/*         }); */}
-            {/*         if (resp.data?.error) { */}
-            {/*           toast({ */}
-            {/*             title: "Pick NOT Deleted", */}
-            {/*             description: resp.data.error, */}
-            {/*             variant: "destructive", */}
-            {/*           }); */}
-            {/*         } else { */}
-            {/*           setHomeTeamSelected(false); */}
-            {/*           setAwayTeamSelected(false); */}
-            {/*           toast({ */}
-            {/*             title: "Pick Deleted", */}
-            {/*             description: "Your pick has been deleted.", */}
-            {/*             variant: "destructive", */}
-            {/*           }); */}
-            {/*         } */}
-            {/*       } catch (error) { */}
-            {/*         toast({ */}
-            {/*           title: "Server Error", */}
-            {/*           description: "Try refreshing the page.", */}
-            {/*           variant: "destructive", */}
-            {/*         }); */}
-            {/*       } */}
-            {/*     } */}
-            {/*   }} */}
-            {/*   size={"icon"} */}
-            {/*   variant={"destructive"} */}
-            {/* > */}
-            {/*   <TrashIcon /> */}
-            {/* </Button> */}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -189,7 +162,9 @@ export default function GameCard({
                 : "hover:bg-primary/5"
             }`}
           >
-            <Image src={homeTeamImageSrc} alt="Logo" height={50} width={50} />
+            {homeTeamImageValid && (
+              <Image src={homeTeamImageSrc} alt="Logo" height={50} width={50} />
+            )}
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium leading-none">
                 {game.home_name}
@@ -206,7 +181,9 @@ export default function GameCard({
                 : "hover:bg-primary/5"
             }`}
           >
-            <Image src={awayTeamImageSrc} alt="Logo" height={50} width={50} />
+            {awayTeamImageSrc && (
+              <Image src={awayTeamImageSrc} alt="Logo" height={50} width={50} />
+            )}
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium leading-none">
                 {game.away_name}

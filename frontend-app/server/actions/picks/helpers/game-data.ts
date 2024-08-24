@@ -32,4 +32,3 @@ export type teamType = {
   image_src: string;
   league: "NFL" | "NCAAF";
 };
-

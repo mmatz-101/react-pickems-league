@@ -33,17 +33,17 @@ export const submitPick = action(
       }
       return returnInfo;
     }
-    // TODO: uncommment this haha
-    // // check if the game has started
-    // if (gameData.status !== "Incomplete") {
-    //   let returnInfo: ReturnInfo = {
-    //     error: "game has already started/completed.",
-    //   };
-    //   if (id) {
-    //     returnInfo.update = true;
-    //   }
-    //   return returnInfo;
-    // }
+    // check if the game has started
+    if (!isNowBeforeGame(gameData)) {
+      let returnInfo: ReturnInfo = {
+        error: "game has already started/completed.",
+      };
+      console.log("game has already started/completed.");
+      if (id) {
+        returnInfo.update = true;
+      }
+      return returnInfo;
+    }
     // get the max amount of picks based on the league
     let maxPicks = 0;
     let maxBinnyPicks = 0;
@@ -64,13 +64,13 @@ export const submitPick = action(
       if (id) {
         if (picks.length > maxPicks) {
           return {
-            error: `You have too many REGULAR ${league} picks for this  week. Try removing a pick first.`,
+            error: `You have too many REGULAR ${league} picks for this  week.`,
           };
         }
       } else {
         if (picks.length >= maxPicks) {
           return {
-            error: `You have too many REGULAR ${league} picks for this  week. Try removing a pick first.`,
+            error: `You have too many REGULAR ${league} picks for this  week.`,
           };
         }
       }
@@ -83,13 +83,13 @@ export const submitPick = action(
       if (id) {
         if (picks.length > maxBinnyPicks) {
           return {
-            error: `You have too many BINNY ${league} picks for this week. Try removing a pick first.`,
+            error: `You have too many BINNY ${league} picks for this week.`,
           };
         }
       } else {
         if (picks.length >= maxBinnyPicks) {
           return {
-            error: `You have too many BINNY ${league} picks for this week. Try removing a pick first.`,
+            error: `You have too many BINNY ${league} picks for this week.`,
           };
         }
       }
@@ -115,20 +115,9 @@ export const submitPick = action(
     // attempty to create/update picks
     try {
       if (id) {
-        console.log("updating pick");
-        const record = await pb.collection("picks").update(id, {
-          user: pb.authStore.model!.id,
-          game: game,
-          week: currentData.week,
-          team_selected: teamSelected,
-          pick_type: pickType,
-          pick_spread: pickSpread,
-          fav_or_und: favOrUnd,
-        });
         revalidatePath("/user/picks");
-        return { success: "pick updated", record };
+        return { error: "pick is already created." };
       } else {
-        console.log("creating pick");
         const record = await pb.collection("picks").create({
           user: pb.authStore.model!.id,
           game: game,
@@ -147,3 +136,14 @@ export const submitPick = action(
     }
   },
 );
+
+const isNowBeforeGame = (game: gameType): boolean => {
+  // Convert the date string to a Date object
+  const gameDate = new Date(game.date);
+
+  // Get the current date and time
+  const now = new Date();
+
+  // Compare the game date to the current date
+  return now <= gameDate;
+};

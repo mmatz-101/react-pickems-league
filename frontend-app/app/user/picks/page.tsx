@@ -16,12 +16,14 @@ export default async function PicksPage() {
     .getFullList({
       filter: `week=${currentData.week} && league="NFL"`,
       expand: "home_team,away_team",
+      sort: "date",
     });
   const gamesNCAAFData: gameTypeExpanded[] = await pb
     .collection("games")
     .getFullList({
       filter: `week=${currentData.week} && league="NCAAF"`,
       expand: "home_team,away_team",
+      sort: "date",
     });
   const currentPicks: pickType[] = await pb.collection("picks").getFullList({
     filter: `week=${currentData.week} && user="${pb.authStore.model!.id}"`,
@@ -30,7 +32,7 @@ export default async function PicksPage() {
     <>
       <Navbar />
       <h1 className="text-2xl p-6">Picks Page</h1>
-      <Tabs defaultValue="NFL" className="">
+      <Tabs defaultValue="NFL" className="px-4">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="NFL">NFL</TabsTrigger>
           <TabsTrigger value="NCAAF">NCAA</TabsTrigger>
@@ -38,7 +40,7 @@ export default async function PicksPage() {
         <TabsContent value="NFL">
           <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 place-items-center gap-4 py-4">
             {gamesNFLData.map((game) => (
-              <div className="min-w-[400px] flex-auto" key={game.id}>
+              <div className="w-full sm:max-w-[500px] " key={game.id}>
                 <GameCard
                   game={game}
                   pick={currentPicks.find((pick) => pick.game === game.id)}
@@ -51,7 +53,7 @@ export default async function PicksPage() {
         <TabsContent value="NCAAF">
           <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 place-items-center gap-4 py-4">
             {gamesNCAAFData.map((game) => (
-              <div className="min-w-[400px] flex-grow" key={game.id}>
+              <div className="w-full sm:max-w-[500px]" key={game.id}>
                 <GameCard
                   game={game}
                   pick={currentPicks.find((pick) => pick.game === game.id)}
