@@ -84,7 +84,7 @@ func GetGameData(gameID string) (*GameData, error) {
 
 // UpdateGameData updates the game's data in the games database
 func UpdateGameData(game OddsSharkGame, league string, week int, gameID string) error {
-	date := time.Unix(game.Date, 0)
+	date := time.Unix(game.Date, 0).Local().UTC()
 	formattedDate := date.Format("2006-01-02 15:04:05Z")
 	reqBody := GameDataRequestBody{
 		GameID:     fmt.Sprintf("%d", game.GameID),
@@ -126,7 +126,7 @@ func UpdateGameData(game OddsSharkGame, league string, week int, gameID string) 
 
 // CreateGameData creates a new game in the games database
 func CreateGameData(game OddsSharkGame, league string, week int) error {
-	date := time.Unix(game.Date, 0)
+	date := time.Unix(game.Date, 0).Local().UTC()
 	formattedDate := date.Format("2006-01-02 15:04:05Z")
 	reqBody := GameDataRequestBody{
 		GameID:     fmt.Sprintf("%d", game.GameID),
