@@ -22,7 +22,7 @@ export default function Home() {
               Ultimate Pickems League
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Experience the best features and tools for your business.
+              A more affordable form of therapy
             </p>
           </div>
           <div className="flex flex-col gap-4">
