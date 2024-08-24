@@ -83,7 +83,7 @@ export default function LoginComponent() {
             status === "executing" ? "animate-pulse" : "",
           )}
         >
-          {"Create Account"}
+          {"Login"}
         </Button>
       </form>
     </Form>
