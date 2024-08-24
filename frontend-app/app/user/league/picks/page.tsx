@@ -11,6 +11,7 @@ import { currentDataType } from "@/server/actions/admin/helpers/current-data";
 import { gameType } from "@/server/actions/picks/helpers/game-data";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
 import { userType } from "@/server/actions/picks/helpers/user-data";
+import { redirect } from "next/navigation";
 import Navbar from "@/components/navbar/navbar";
 
 interface pickTypeQuery extends pickType {
@@ -81,6 +82,8 @@ export default async function LeaguePicksPage() {
       </>
     );
   }
+
+  redirect("/login");
 }
 
 // Function to get usernames by name
