@@ -12,9 +12,6 @@ import {
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { MoreHorizontal } from "lucide-react";
-import { deletePick } from "@/server/actions/picks/delete-picks";
-import { toast } from "../ui/use-toast";
-import { revalidatePath } from "next/cache";
 import { moreInformation } from "@/server/actions/picks/more-information";
 
 interface pickTypeTable extends pickType {
@@ -23,16 +20,19 @@ interface pickTypeTable extends pickType {
 
 export const mobileColumns: ColumnDef<pickTypeTable>[] = [
   {
-    accessorKey: "expand.game.home_name",
-    header: "Home Team",
-  },
-  {
-    accessorKey: "expand.game.away_name",
-    header: "Away Team",
-  },
-  {
-    accessorKey: "team_selected",
     header: "Team Selected",
+    cell: ({ row }) => {
+      const pick = row.original;
+      if (pick.team_selected === "HOME") {
+        return pick.expand.game.home_name;
+      } else {
+        return pick.expand.game.away_name;
+      }
+    },
+  },
+  {
+    accessorKey: "pick_spread",
+    header: "Spread",
   },
   {
     accessorKey: "pick_type",
@@ -52,29 +52,9 @@ export const mobileColumns: ColumnDef<pickTypeTable>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={async () => {
-                try {
-                  await deletePick({ id: pick.id, gameID: pick.game });
-                  toast({
-                    title: "Pick Deleted",
-                    description: "Your pick has been deleted.",
-                    variant: "destructive",
-                  });
-                  revalidatePath("/user/dashboard");
-                } catch (error) {
-                  toast({
-                    title: "Picks Closed",
-                    description:
-                      "Unable to delete picks. When allow picks is closed",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            >
-              Delete Pick
+            <DropdownMenuItem onClick={() => moreInformation({ id: pick.id })}>
+              More Information
             </DropdownMenuItem>
-            <DropdownMenuItem>More Information</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -84,16 +64,42 @@ export const mobileColumns: ColumnDef<pickTypeTable>[] = [
 
 export const columns: ColumnDef<pickTypeTable>[] = [
   {
-    accessorKey: "expand.game.home_name",
-    header: "Home Team",
-  },
-  {
-    accessorKey: "expand.game.away_name",
-    header: "Away Team",
-  },
-  {
     accessorKey: "team_selected",
     header: "Team Selected",
+  },
+  {
+    accessorKey: "pick_spread",
+    header: "Spread",
+  },
+  {
+    header: "Home Team",
+    cell: ({ row }) => {
+      const pick = row.original;
+      if (pick.team_selected === "HOME") {
+        return (
+          <p className="font-bold text-primary">{pick.expand.game.home_name}</p>
+        );
+      } else {
+        return pick.expand.game.home_name;
+      }
+    },
+  },
+  {
+    header: "Away Team",
+    cell: ({ row }) => {
+      const pick = row.original;
+      if (pick.team_selected === "AWAY") {
+        return (
+          <p className="font-bold text-primary">{pick.expand.game.away_name}</p>
+        );
+      } else {
+        return pick.expand.game.away_name;
+      }
+    },
+  },
+  {
+    accessorKey: "expand.game.status",
+    header: "Status",
   },
   {
     accessorKey: "expand.game.league",
@@ -104,6 +110,21 @@ export const columns: ColumnDef<pickTypeTable>[] = [
     header: "Pick Type",
   },
   {
+    accessorKey: "result_text",
+    header: "Result",
+  },
+  {
+    accessorKey: "Score",
+    cell: ({ row }) => {
+      const pick = row.original;
+      if (pick.expand.game.status === "FINAL") {
+        return (
+          pick.expand.game.home_score + " - " + pick.expand.game.away_score
+        );
+      }
+    },
+  },
+  {
     id: "action",
     cell: ({ row }) => {
       const pick = row.original;
@@ -117,28 +138,6 @@ export const columns: ColumnDef<pickTypeTable>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={async () => {
-                try {
-                  await deletePick({ id: pick.id, gameID: pick.game });
-                  toast({
-                    title: "Pick Deleted",
-                    description: "Your pick has been deleted.",
-                    variant: "destructive",
-                  });
-                  revalidatePath("/user/dashboard");
-                } catch (error) {
-                  toast({
-                    title: "Picks Closed",
-                    description:
-                      "Unable to delete picks. When allow picks is closed",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            >
-              Delete Pick
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => moreInformation({ id: pick.id })}>
               More Information
             </DropdownMenuItem>
