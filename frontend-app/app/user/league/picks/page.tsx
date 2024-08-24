@@ -17,6 +17,8 @@ interface pickTypeQuery extends pickType {
   expand: { game: gameType; user: userType };
 }
 
+type pickTypeQueryType = pickTypeQuery;
+
 export default async function LeaguePicksPage() {
   const pb = await getPB();
 
@@ -38,42 +40,55 @@ export default async function LeaguePicksPage() {
     return (
       <>
         <Navbar />
-        <h1 className="text-xl p-4">League Picks Page</h1>
-        <p className="text-lg px-4">Week {currentData.week} </p>
-        {uniqueNames.map((name: string) => (
-          <div className="flex justify-center" key={name}>
-            <Accordion
-              className="max-w-5xl py-2 px-6 flex-auto"
-              type="single"
-              collapsible
-              key={currentData.week}
-              defaultValue="item-0"
-            >
-              <AccordionItem value={"item-0"}>
-                <AccordionTrigger>{name}</AccordionTrigger>
-                <AccordionContent>
-                  <div className="container mx-auto py-10 sm:block md:hidden">
-                    <DataTable
-                      columns={mobileColumns}
-                      data={picks.filter(
-                        (pick) => pick.expand.user.first_name === name,
-                      )}
-                    />
-                  </div>
-                  <div className="container mx-auto py-10 hidden md:block">
-                    <DataTable
-                      columns={columns}
-                      data={picks.filter(
-                        (pick) => pick.expand.user.first_name === name,
-                      )}
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-        ))}
+        <h1 className="text-2xl md:text-3xl p-4">League Picks Page</h1>
+        <p className="text-lg px-4">Week {currentData.week}</p>
+        <div className="flex flex-col gap-4 p-4">
+          {uniqueNames.map((name) => (
+            <div className="w-full max-w-5xl mx-auto" key={name}>
+              <Accordion
+                className="w-full"
+                type="single"
+                collapsible
+                defaultValue="item-0"
+              >
+                <AccordionItem value="item-0">
+                  <AccordionTrigger className="flex items-center justify-between p-4 rounded-md hover:bg-gray-300">
+                    <span className="font-bold">{name}</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="bg-white border-t border-gray-200 rounded-b-md">
+                    <div className="container py-4 sm:block md:hidden">
+                      <DataTable
+                        columns={mobileColumns}
+                        data={picks.filter(
+                          (pick) => pick.expand.user.first_name === name,
+                        )}
+                      />
+                    </div>
+                    <div className="container mx-auto py-4 hidden md:block">
+                      <DataTable
+                        columns={columns}
+                        data={picks.filter(
+                          (pick) => pick.expand.user.first_name === name,
+                        )}
+                      />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          ))}
+        </div>
       </>
     );
   }
 }
+
+// Function to get usernames by name
+const getUsernamesByName = (
+  picks: pickTypeQueryType[],
+  name: string,
+): string => {
+  return picks
+    .filter((pick) => pick.expand.user.first_name === name)
+    .map((pick) => pick.expand.user.username)[0];
+};
