@@ -240,13 +240,13 @@ func UpdatePickData(pick PickDataExpand) error {
 func UpdatePickResult(pick PickDataExpand, currentData CurrentData) PickDataExpand {
 	// check the spread against the spread at the time of the pick not against the current pick line.
 	if pick.TeamSelected == "HOME" {
-		if pick.PickSpread-float32(pick.Expand.Game.HomeScore) > float32(pick.Expand.Game.AwayScore) {
+		if pick.PickSpread+float32(pick.Expand.Game.HomeScore) > float32(pick.Expand.Game.AwayScore) {
 			pick.ResultPoints = currentData.RegularPointValue
 			pick.ResultText = "WIN"
 			if pick.PickType == "BINNY" {
 				pick.ResultPoints = currentData.BinnyPointValue
 			}
-		} else if pick.PickSpread-float32(pick.Expand.Game.HomeScore) == float32(pick.Expand.Game.AwayScore) {
+		} else if pick.PickSpread+float32(pick.Expand.Game.HomeScore) == float32(pick.Expand.Game.AwayScore) {
 			pick.ResultPoints = currentData.RegularPointValue / 2
 			pick.ResultText = "PUSH"
 			if pick.PickType == "BINNY" {
@@ -260,13 +260,13 @@ func UpdatePickResult(pick PickDataExpand, currentData CurrentData) PickDataExpa
 			}
 		}
 	} else if pick.TeamSelected == "AWAY" {
-		if pick.PickSpread-float32(pick.Expand.Game.AwayScore) > float32(pick.Expand.Game.HomeScore) {
+		if pick.PickSpread+float32(pick.Expand.Game.AwayScore) > float32(pick.Expand.Game.HomeScore) {
 			pick.ResultPoints = currentData.RegularPointValue
 			pick.ResultText = "WIN"
 			if pick.PickType == "BINNY" {
 				pick.ResultPoints = currentData.BinnyPointValue
 			}
-		} else if pick.PickSpread-float32(pick.Expand.Game.AwayScore) == float32(pick.Expand.Game.HomeScore) {
+		} else if pick.PickSpread+float32(pick.Expand.Game.AwayScore) == float32(pick.Expand.Game.HomeScore) {
 			pick.ResultPoints = currentData.RegularPointValue / 2
 			pick.ResultText = "PUSH"
 			if pick.PickType == "BINNY" {
