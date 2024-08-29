@@ -42,7 +42,7 @@ export default async function LeaguePicksPage() {
     .getFirstListItem("");
 
   const picks: pickTypeQuery[] = await pb.collection("picks").getFullList({
-    filter: `week=${currentData.week}`,
+    filter: `week=${currentData.week} && @now>game.date`,
     sort: "user_team, -pick_type, -game.league, +game.date",
     expand: "game, user_team",
   });

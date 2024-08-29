@@ -31,16 +31,16 @@ export default async function PicksPage() {
   const gamesNFLData: gameTypeExpanded[] = await pb
     .collection("games")
     .getFullList({
-      filter: `week=${currentData.week} && league="NFL"`,
+      filter: `week=${currentData.week} && league="NFL" && status!="FINAL"`,
       expand: "home_team,away_team",
-      sort: "+status, date",
+      sort: "date",
     });
   const gamesNCAAFData: gameTypeExpanded[] = await pb
     .collection("games")
     .getFullList({
-      filter: `week=${currentData.week} && league="NCAAF"`,
+      filter: `week=${currentData.week} && league="NCAAF" && status!="FINAL"`,
       expand: "home_team,away_team",
-      sort: "+status, date",
+      sort: "date",
     });
   const currentPicks: pickType[] = await pb.collection("picks").getFullList({
     filter: `week=${currentData.week} && user_team="${userTeam.id}"`,
