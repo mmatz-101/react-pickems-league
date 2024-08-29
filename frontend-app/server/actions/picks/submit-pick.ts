@@ -6,6 +6,8 @@ import { SubmitPickSchema } from "@/schema/submit-pick";
 import { currentDataType } from "../admin/helpers/current-data";
 import { revalidatePath } from "next/cache";
 import { gameType } from "./helpers/game-data";
+import { pickType, userTeamType } from "./helpers/pick-data";
+import { getUsersTeam } from "@/lib/utils";
 
 export interface ReturnInfo {
   error?: string;
@@ -44,6 +46,11 @@ export const submitPick = action(
       }
       return returnInfo;
     }
+    // get the user's team
+    const userTeam: userTeamType = await getUsersTeam(pb.authStore.model!.id);
+    if (!userTeam) {
+      return { error: "user's team not found" };
+    }
     // get the max amount of picks based on the league
     let maxPicks = 0;
     let maxBinnyPicks = 0;
@@ -56,8 +63,8 @@ export const submitPick = action(
     }
     // check how many games the user has picked.
     if (pickType === "REGULAR") {
-      const picks = await pb.collection("picks").getFullList({
-        filter: `user="${pb.authStore.model!.id}" && week=${
+      const picks: pickType[] = await pb.collection("picks").getFullList({
+        filter: `user_team="${userTeam.id}" && week=${
           currentData.week
         } && game.league="${league}" && pick_type="REGULAR"`,
       });
@@ -76,7 +83,7 @@ export const submitPick = action(
       }
     } else {
       const picks = await pb.collection("picks").getFullList({
-        filter: `user="${pb.authStore.model!.id}" && week=${
+        filter: `user_team="${userTeam.id}" && week=${
           currentData.week
         } && game.league="${league}" && pick_type="BINNY"`,
       });
@@ -119,7 +126,7 @@ export const submitPick = action(
         return { error: "pick is already created." };
       } else {
         const record = await pb.collection("picks").create({
-          user: pb.authStore.model!.id,
+          user_team: userTeam.id,
           game: game,
           week: currentData.week,
           team_selected: teamSelected,

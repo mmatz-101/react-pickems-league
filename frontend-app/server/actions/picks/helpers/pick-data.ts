@@ -8,7 +8,12 @@ export type pickType = {
   team_selected: "HOME" | "AWAY";
   updated: string;
   created: string;
-  user: string;
+  user_team: string;
   week: number;
 };
 
+export type userTeamType = {
+  id: string;
+  team_name: string;
+  field: string[];
+};

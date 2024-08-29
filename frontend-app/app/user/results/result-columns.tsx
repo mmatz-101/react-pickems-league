@@ -4,9 +4,11 @@ import { userType } from "@/server/actions/picks/helpers/user-data";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
+import { userTeamType } from "@/server/actions/picks/helpers/pick-data";
 
 export type resultColumnsType = {
-  user: String;
+  team_name: String;
+  rank: Number;
   result_points: Number;
   win_count: Number;
   lost_count: Number;
@@ -14,13 +16,26 @@ export type resultColumnsType = {
   und_count: Number;
   pick_count: Number;
   win_percentage: Number;
-  expand: { user: userType };
 };
 
 export const resultColumns: ColumnDef<resultColumnsType>[] = [
   {
-    accessorKey: "expand.user.first_name",
+    accessorKey: "team_name",
     header: "Name",
+  },
+  {
+    accessorKey: "rank",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Rank
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
   },
   {
     accessorKey: "result_points",
