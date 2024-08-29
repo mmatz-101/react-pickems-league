@@ -6,16 +6,25 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/cron"
 )
 
-const DB_URL = "https://db.pickemsleague.com"
+var DB_URL string
 
 func main() {
 	app := pocketbase.New()
+
+	// get environment variables
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalln("Error loading .env file")
+	}
+	DB_URL = os.Getenv("DB_URL")
 
 	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
 		scheduler := cron.New()
