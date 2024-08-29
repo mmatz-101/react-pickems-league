@@ -97,11 +97,11 @@ export default async function LeaguePicksPage() {
 }
 
 // Function to get usernames by name
-const getUsernamesByName = (
-  picks: pickTypeQueryType[],
-  name: string,
-): string => {
-  return picks
-    .filter((pick) => pick.expand.user.first_name === name)
-    .map((pick) => pick.expand.user.username)[0];
-};
+// const getUsernamesByName = (
+//   picks: pickTypeQueryType[],
+//   name: string,
+// ): string => {
+//   return picks
+//     .filter((pick) => pick.expand.user.first_name === name)
+//     .map((pick) => pick.expand.user.username)[0];
+// };
