@@ -33,14 +33,14 @@ export default async function PicksPage() {
     .getFullList({
       filter: `week=${currentData.week} && league="NFL"`,
       expand: "home_team,away_team",
-      sort: "date",
+      sort: "+status, date",
     });
   const gamesNCAAFData: gameTypeExpanded[] = await pb
     .collection("games")
     .getFullList({
       filter: `week=${currentData.week} && league="NCAAF"`,
       expand: "home_team,away_team",
-      sort: "date",
+      sort: "+status, date",
     });
   const currentPicks: pickType[] = await pb.collection("picks").getFullList({
     filter: `week=${currentData.week} && user_team="${userTeam.id}"`,
@@ -57,15 +57,19 @@ export default async function PicksPage() {
         </TabsList>
         <TabsContent value="NFL">
           <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 place-items-center gap-4 py-4">
-            {gamesNFLData.map((game) => (
-              <div className="w-full sm:max-w-[500px] " key={game.id}>
-                <GameCard
-                  game={game}
-                  pick={currentPicks.find((pick) => pick.game === game.id)}
-                  key={game.id}
-                />
-              </div>
-            ))}
+            {currentData.max_nfl_picks !== 0 &&
+              gamesNFLData.map((game) => (
+                <div className="w-full sm:max-w-[500px] " key={game.id}>
+                  <GameCard
+                    game={game}
+                    pick={currentPicks.find((pick) => pick.game === game.id)}
+                    key={game.id}
+                  />
+                </div>
+              ))}
+            <div className="w-full sm:max-w-[500px] ">
+              No NFL picks this week. Select the NCAA tab to make picks.
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="NCAAF">
