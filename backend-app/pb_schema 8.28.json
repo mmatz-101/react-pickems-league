@@ -516,14 +516,14 @@
     "schema": [
       {
         "system": false,
-        "id": "thqq7ltq",
-        "name": "user",
+        "id": "xccgb7yp",
+        "name": "user_team",
         "type": "relation",
-        "required": false,
+        "required": true,
         "presentable": false,
         "unique": false,
         "options": {
-          "collectionId": "_pb_users_auth_",
+          "collectionId": "lrzh15w98whq9gj",
           "cascadeDelete": false,
           "minSelect": null,
           "maxSelect": 1,
@@ -655,7 +655,7 @@
       }
     ],
     "indexes": [
-      "CREATE UNIQUE INDEX `idx_WI2nlKg` ON `picks` (\n  `user`,\n  `game`\n)"
+      "CREATE UNIQUE INDEX `idx_FU1PuJw` ON `picks` (\n  `user_team`,\n  `game`\n)"
     ],
     "listRule": "",
     "viewRule": "",
@@ -782,15 +782,29 @@
     "options": {}
   },
   {
-    "id": "9657rx9a9lr2mpm",
-    "name": "results_picks",
-    "type": "view",
+    "id": "lrzh15w98whq9gj",
+    "name": "user_teams",
+    "type": "base",
     "system": false,
     "schema": [
       {
         "system": false,
-        "id": "3nz2xskk",
-        "name": "user",
+        "id": "yyedlh5z",
+        "name": "team_name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
+        }
+      },
+      {
+        "system": false,
+        "id": "nqxsfcbs",
+        "name": "users",
         "type": "relation",
         "required": false,
         "presentable": false,
@@ -799,13 +813,54 @@
           "collectionId": "_pb_users_auth_",
           "cascadeDelete": false,
           "minSelect": null,
-          "maxSelect": 1,
+          "maxSelect": null,
           "displayFields": null
+        }
+      }
+    ],
+    "indexes": [],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "",
+    "updateRule": "",
+    "deleteRule": "",
+    "options": {}
+  },
+  {
+    "id": "eu22toytjz1xaz0",
+    "name": "results_picks",
+    "type": "view",
+    "system": false,
+    "schema": [
+      {
+        "system": false,
+        "id": "y44yse64",
+        "name": "team_name",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "min": null,
+          "max": null,
+          "pattern": ""
         }
       },
       {
         "system": false,
-        "id": "5n4zqj5a",
+        "id": "byjyp1bd",
+        "name": "rank",
+        "type": "json",
+        "required": false,
+        "presentable": false,
+        "unique": false,
+        "options": {
+          "maxSize": 1
+        }
+      },
+      {
+        "system": false,
+        "id": "g6gn88qm",
         "name": "result_points",
         "type": "json",
         "required": false,
@@ -817,7 +872,7 @@
       },
       {
         "system": false,
-        "id": "wccexmww",
+        "id": "pxd650in",
         "name": "win_count",
         "type": "number",
         "required": false,
@@ -831,7 +886,7 @@
       },
       {
         "system": false,
-        "id": "hmde73io",
+        "id": "xgb6tlyu",
         "name": "lost_count",
         "type": "number",
         "required": false,
@@ -845,7 +900,7 @@
       },
       {
         "system": false,
-        "id": "sbh9gepz",
+        "id": "tymt4hcs",
         "name": "push_count",
         "type": "number",
         "required": false,
@@ -859,7 +914,7 @@
       },
       {
         "system": false,
-        "id": "zsnh0wax",
+        "id": "zvx4iowt",
         "name": "fav_count",
         "type": "number",
         "required": false,
@@ -873,7 +928,7 @@
       },
       {
         "system": false,
-        "id": "pqw6jyq0",
+        "id": "mihppb0p",
         "name": "und_count",
         "type": "number",
         "required": false,
@@ -887,7 +942,7 @@
       },
       {
         "system": false,
-        "id": "tdq2bpti",
+        "id": "9kpjozp8",
         "name": "pick_count",
         "type": "number",
         "required": false,
@@ -901,7 +956,7 @@
       },
       {
         "system": false,
-        "id": "jbzrvyhq",
+        "id": "gejwoyvz",
         "name": "win_percentage",
         "type": "json",
         "required": false,
@@ -913,8 +968,8 @@
       },
       {
         "system": false,
-        "id": "tljqlekj",
-        "name": "last_updated",
+        "id": "h0zwgwdr",
+        "name": "binny_win_percentage",
         "type": "json",
         "required": false,
         "presentable": false,
@@ -931,7 +986,7 @@
     "updateRule": null,
     "deleteRule": null,
     "options": {
-      "query": "SELECT \n  (ROW_NUMBER() OVER ()) as id,\n  user,\n  SUM(result_points) as result_points,\n  COUNT(CASE WHEN result_text = 'WIN' THEN 1 END) as win_count,\n  COUNT(CASE WHEN result_text = 'LOST' THEN 1 END) as lost_count,\n  COUNT(CASE WHEN result_text = 'PUSH' THEN 1 END) as push_count,\n  COUNT(CASE WHEN fav_or_und = 'FAV' THEN 1 END) as fav_count,\n  COUNT(CASE WHEN fav_or_und = 'UND' THEN 1 END) as und_count,\n  COUNT(*) as pick_count,\n  ROUND(((CAST(COUNT(CASE WHEN result_text = 'WIN' THEN 1 END) AS REAL) / \n  IFNULL(COUNT(*), 0)) * 100.0), 2) as win_percentage,\n  MAX(updated) as last_updated\nFROM picks\nGROUP BY user\nORDER BY SUM(result_points) DESC"
+      "query": "SELECT \n  (ROW_NUMBER() OVER ()) as id,\n  ut.team_name,\n  (RANK() OVER (ORDER BY SUM(p.result_points) DESC)) as rank,\n  SUM(p.result_points) as result_points,\n  COUNT(CASE WHEN p.result_text = 'WIN' THEN 1 END) as win_count,\n  COUNT(CASE WHEN p.result_text = 'LOST' THEN 1 END) as lost_count,\n  COUNT(CASE WHEN p.result_text = 'PUSH' THEN 1 END) as push_count,\n  COUNT(CASE WHEN p.fav_or_und = 'FAV' THEN 1 END) as fav_count,\n  COUNT(CASE WHEN p.fav_or_und = 'UND' THEN 1 END) as und_count,\n  COUNT(*) as pick_count,\n  ROUND(((CAST(COUNT(CASE WHEN p.result_text = 'WIN' THEN 1 END) AS REAL) / \n  IFNULL(COUNT(*), 0)) * 100.0), 2) as win_percentage,\n  ROUND(((CAST(COUNT(CASE WHEN (p.result_text = 'WIN') AND (p.pick_type = 'BINNY') THEN 1 END) AS REAL) / IFNULL(COUNT(*), 0)) * 100.0), 2) as binny_win_percentage\nFROM picks p\n  INNER JOIN user_teams ut ON p.user_team = ut.id\nGROUP BY user_team\nORDER BY SUM(result_points) DESC"
     }
   }
 ]
