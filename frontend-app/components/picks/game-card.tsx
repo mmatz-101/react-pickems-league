@@ -155,25 +155,6 @@ export default function GameCard({
         </CardHeader>
         <CardContent className="grid gap-4">
           <div
-            onClick={homeTeamClick}
-            className={`flex items-center space-x-4 rounded-md border p-4  cursor-pointer ${
-              homeTeamSelected
-                ? "bg-primary/25 hover:bg-primary/20"
-                : "hover:bg-primary/5"
-            }`}
-          >
-            {homeTeamImageValid && (
-              <Image src={homeTeamImageSrc} alt="Logo" height={50} width={50} />
-            )}
-            <div className="flex-1 space-y-1">
-              <p className="text-sm font-medium leading-none">
-                {game.home_name}
-              </p>
-              <p className="text-sm text-muted-foreground">record</p>
-            </div>
-            <span>{game.home_spread}</span>
-          </div>
-          <div
             onClick={awayTeamClick}
             className={`flex items-center space-x-4 rounded-md border p-4  cursor-pointer ${
               awayTeamSelected
@@ -181,9 +162,16 @@ export default function GameCard({
                 : "hover:bg-primary/5"
             }`}
           >
-            {awayTeamImageSrc && (
-              <Image src={awayTeamImageSrc} alt="Logo" height={50} width={50} />
-            )}
+            <div className="h-50 w-50 flex items-center justify-center">
+              {awayTeamImageSrc && (
+                <Image
+                  src={awayTeamImageSrc}
+                  alt="Logo"
+                  height={50}
+                  width={50}
+                />
+              )}
+            </div>
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium leading-none">
                 {game.away_name}
@@ -191,6 +179,32 @@ export default function GameCard({
               <p className="text-sm text-muted-foreground">record</p>
             </div>
             <span>{game.away_spread}</span>
+          </div>
+          <div
+            onClick={homeTeamClick}
+            className={`flex items-center space-x-4 rounded-md border p-4  cursor-pointer ${
+              homeTeamSelected
+                ? "bg-primary/25 hover:bg-primary/20"
+                : "hover:bg-primary/5"
+            }`}
+          >
+            <div className="h-50 w-50 flex items-center justify-center">
+              {homeTeamImageValid && (
+                <Image
+                  src={homeTeamImageSrc}
+                  alt="Logo"
+                  height={50}
+                  width={50}
+                />
+              )}
+            </div>
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium leading-none">
+                @{game.home_name}
+              </p>
+              <p className="text-sm text-muted-foreground">record</p>
+            </div>
+            <span>{game.home_spread}</span>
           </div>
         </CardContent>
         <CardFooter
