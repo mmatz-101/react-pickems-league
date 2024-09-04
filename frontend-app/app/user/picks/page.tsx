@@ -67,9 +67,6 @@ export default async function PicksPage() {
                   />
                 </div>
               ))}
-            <div className="w-full sm:max-w-[500px] ">
-              No NFL picks this week. Select the NCAA tab to make picks.
-            </div>
           </div>
         </TabsContent>
         <TabsContent value="NCAAF">
