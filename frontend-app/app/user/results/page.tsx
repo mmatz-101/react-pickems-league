@@ -4,7 +4,6 @@ import { resultColumns, resultColumnsType } from "./result-columns";
 import Navbar from "@/components/navbar/navbar";
 import { redirect } from "next/navigation";
 import { getUsersTeam } from "@/lib/utils";
-import { userTeamType } from "@/server/actions/picks/helpers/pick-data";
 
 export default async function ResultPage() {
   const pb = await getPB();
@@ -17,13 +16,13 @@ export default async function ResultPage() {
     redirect("/login");
   }
   // get user team no need to use return for this page
-  const userTeam: userTeamType = await getUsersTeam(pb.authStore.model.id);
+  await getUsersTeam(pb.authStore.model.id);
 
   // everything is good
   const resultData: resultColumnsType[] = await pb
     .collection("results_picks")
     .getFullList({ sort: "rank" });
-  console.log(resultData);
+
   return (
     <>
       <Navbar />

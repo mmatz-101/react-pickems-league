@@ -4,6 +4,7 @@ import UpdateResults from "@/components/admin/update-results";
 import { getPB } from "@/app/pocketbase";
 import { currentDataType } from "@/server/actions/admin/helpers/current-data";
 import LinkTeamsToGames from "@/components/admin/link-teams-to-games";
+import ExcelUploader from "@/components/admin/file-upload";
 
 export default async function AdminDashboard() {
   const pb = await getPB();
@@ -13,10 +14,7 @@ export default async function AdminDashboard() {
   return (
     <div>
       <h1 className="text-3xl pb-4">Dashboard</h1>
-      <CurrentWeek currentWeek={currentData.week} />
-      <DataCollectionForm />
-      <UpdateResults />
-      <LinkTeamsToGames />
+      <ExcelUploader />
     </div>
   );
 }

@@ -21,8 +21,6 @@ interface pickTypeQuery extends pickType {
   expand: { game: gameType; user_team: userTeamType };
 }
 
-type pickTypeQueryType = pickTypeQuery;
-
 export default async function LeaguePicksPage() {
   const pb = await getPB();
   // check if the user is valid

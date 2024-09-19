@@ -1,21 +1,19 @@
 "use client";
 
-import { userType } from "@/server/actions/picks/helpers/user-data";
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
-import { userTeamType } from "@/server/actions/picks/helpers/pick-data";
 
 export type resultColumnsType = {
-  team_name: String;
-  rank: Number;
-  result_points: Number;
-  win_count: Number;
-  lost_count: Number;
-  fav_count: Number;
-  und_count: Number;
-  pick_count: Number;
-  win_percentage: Number;
+  team_name: string;
+  rank: number;
+  result_points: number;
+  win_count: number;
+  lost_count: number;
+  fav_count: number;
+  und_count: number;
+  pick_count: number;
+  win_percentage: number;
 };
 
 export const resultColumns: ColumnDef<resultColumnsType>[] = [

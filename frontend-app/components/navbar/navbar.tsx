@@ -10,6 +10,7 @@ import {
   Calendar,
   Trophy,
   LogOutIcon,
+  Medal,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -76,6 +77,14 @@ export default function Navbar() {
           Weekly
         </Link>
         <Link
+          href="/user/weekly-winner"
+          className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
+          prefetch={false}
+        >
+          <Medal size={16} className="mr-1" />
+          Weekly Winner
+        </Link>
+        <Link
           href="/user/results"
           className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
           prefetch={false}
@@ -127,6 +136,14 @@ export default function Navbar() {
           >
             <Calendar size={16} className="mr-1" />
             Weekly
+          </Link>
+          <Link
+            href="/user/weekly-winner"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
+            prefetch={false}
+          >
+            <Medal size={16} className="mr-1" />
+            Weekly Winner
           </Link>
           <Link
             href="/user/results"
