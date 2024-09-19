@@ -81,7 +81,7 @@ export default async function WeeklyWinner() {
   console.log(weeklyWinnerData);
 
   const enrolledCount = weeklyCompData.filter((item) => item.enrolled).length;
-  const weeklyPot = enrolledCount * 100 * 0.9;
+  const weeklyPot = enrolledCount * 50 * 1.0;
 
   return (
     <>
