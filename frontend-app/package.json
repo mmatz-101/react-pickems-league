@@ -30,7 +30,7 @@
     "date-fns": "^3.6.0",
     "eslint-config-next": "^15.0.0-rc.0",
     "lucide-react": "^0.379.0",
-    "next": "^14.2.11",
+    "next": "^14.2.14",
     "next-safe-action": "^6.2.0",
     "nextjs": "^0.0.3",
     "pocketbase": "^0.21.5",
@@ -57,5 +57,6 @@
   "trustedDependencies": [
     "@vercel/speed-insights",
     "sharp"
-  ]
+  ],
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
