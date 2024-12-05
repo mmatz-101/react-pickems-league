@@ -68,12 +68,22 @@ export const submitPick = action(
       maxPicks = currentData.max_ncaaf_picks;
       maxBinnyPicks = currentData.max_ncaaf_binny_picks;
     }
+    // TEMPORARY FREE FOR ALL ON PICKS THIS WEEK #####################################
+    maxPicks = currentData.max_nfl_picks + currentData.max_ncaaf_picks
+    maxBinnyPicks = currentData.max_nfl_binny_picks + currentData.max_ncaaf_binny_picks
+    // ###############################################################################
     // check how many games the user has picked.
     if (pickType === "REGULAR") {
+      // TEMPORARY FREE FOR ALL ON PICKS THIS WEEK #####################################
       const picks: pickType[] = await pb.collection("picks").getFullList({
         filter: `user_team="${userTeam.id}" && week=${
           currentData.week
-        } && game.league="${league}" && pick_type="REGULAR"`,
+        } && pick_type="REGULAR"`,
+      // ###############################################################################
+      // const picks: pickType[] = await pb.collection("picks").getFullList({
+      //   filter: `user_team="${userTeam.id}" && week=${
+      //     currentData.week
+      //   } && game.league="${league}" && pick_type="REGULAR"`,
       });
       if (id) {
         if (picks.length > maxPicks) {
@@ -89,11 +99,18 @@ export const submitPick = action(
         }
       }
     } else {
+      // TEMPORARY FREE FOR ALL ON PICKS THIS WEEK #####################################
       const picks = await pb.collection("picks").getFullList({
         filter: `user_team="${userTeam.id}" && week=${
           currentData.week
-        } && game.league="${league}" && pick_type="BINNY"`,
+        } && pick_type="BINNY"`,
       });
+      // ###############################################################################
+      // const picks = await pb.collection("picks").getFullList({
+      //   filter: `user_team="${userTeam.id}" && week=${
+      //     currentData.week
+      //   } && game.league="${league}" && pick_type="BINNY"`,
+      // });
       if (id) {
         if (picks.length > maxBinnyPicks) {
           return {
