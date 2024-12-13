@@ -1,3 +1,10 @@
+# PICKEMS
+____
+Pickem's is a sports betting league for the NFL and NCAA, where you can challenge friends and family by betting against team spreads. I created this site to eliminate the need for the Excel file previously used by the commissioner.
+
+This project uses __Pocketbase__ for the backend, along with custom CRON jobs to pull spreads from existing sports betting sites. The frontend is built with __Next.js__ and __Tailwind CSS__, and I use __Python__ scripts to automate various database-related tasks.
+
+
 # FAQ:
 How often are the games/results updated?
 - Every minute, this is subject to change depending on loading and cost on server.
