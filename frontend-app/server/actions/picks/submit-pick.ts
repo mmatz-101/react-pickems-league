@@ -46,13 +46,15 @@ export const submitPick = action(
       }
       return returnInfo;
     }
-    // check if the spread has not been uploaded
-    if (gameData.home_spread === 0 || gameData.away_spread === 0) {
-      let returnInfo: ReturnInfo = {
-        error: "please wait until spread has been updated with non-zero.",
-      };
-      return returnInfo;
-    }
+    // TEMPORARY ALLOW ZERO SPREAD PICKS #####################################
+    // // check if the spread has not been uploaded
+    // if (gameData.home_spread === 0 || gameData.away_spread === 0) {
+    //   let returnInfo: ReturnInfo = {
+    //     error: "please wait until spread has been updated with non-zero.",
+    //   };
+    //   return returnInfo;
+    // }
+    // ###############################################################################
     // get the user's team
     const userTeam: userTeamType = await getUsersTeam(pb.authStore.model!.id);
     if (!userTeam) {
