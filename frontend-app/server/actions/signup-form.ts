@@ -5,9 +5,9 @@ import { action } from "@/lib/safe-action";
 import { redirect } from "next/navigation";
 import { SignupSchema } from "@/schema/signup-schema";
 
-export const SignupUser = action(
-  SignupSchema,
-  async ({ firstName, lastName, email, password }) => {
+export const SignupUser = action
+  .inputSchema(SignupSchema)
+  .action(async ({ parsedInput: { firstName, lastName, email, password } }) => {
     try {
       // creating user data
       const userData = {
@@ -32,4 +32,4 @@ export const SignupUser = action(
     // redirect cannot be inside try and catch block
     redirect("/login");
   },
-);
+  );

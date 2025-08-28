@@ -89,7 +89,7 @@ export default function GameCard({
   const { toast } = useToast();
 
   const { execute } = useAction(submitPick, {
-    onSuccess: (data: ReturnInfo) => {
+    onSuccess: ({ data }: { data: ReturnInfo }) => {
       if (data.error) {
         toast({
           title: "Pick unable to be submitted.",
