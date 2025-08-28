@@ -20,11 +20,11 @@ import { Button } from "../ui/button";
 import { Suspense, useEffect, useState } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { ReturnInfo, submitPick } from "@/server/actions/picks/submit-pick";
-import { z } from "zod";
 import { useToast } from "../ui/use-toast";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
+import { PickType } from "@/schema/submit-pick";
 
 export interface gameTypeExpanded extends gameType {
   expand: { home_team: teamType | null; away_team: teamType | null };
@@ -84,9 +84,7 @@ export default function GameCard({
     }
   }, [pick]);
 
-  const pickTypeSchema = z.enum(["REGULAR", "BINNY"]);
-  const [pickTypeSelected, setPickTypeSelected] =
-    useState<z.infer<typeof pickTypeSchema>>("REGULAR");
+  const [pickTypeSelected, setPickTypeSelected] = useState<PickType>("REGULAR");
 
   const { toast } = useToast();
 
@@ -163,7 +161,7 @@ export default function GameCard({
               }`}
           >
             <div className="h-50 w-50 flex items-center justify-center">
-              {awayTeamImageSrc && (
+              {awayTeamImageValid && (
                 <Image
                   src={awayTeamImageSrc}
                   alt="Logo"

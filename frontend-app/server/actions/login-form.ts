@@ -9,9 +9,10 @@ import { redirect } from "next/navigation";
 export const LoginUser = action(LoginSchema, async ({ email, password }) => {
   try {
     const pb = await getPB();
+    const cookieStore = await cookies();
     await pb.collection("users").authWithPassword(email, password);
 
-    cookies().set("pb_auth", pb.authStore.exportToCookie({ httpOnly: false }));
+    cookieStore.set("pb_auth", pb.authStore.exportToCookie({ httpOnly: false }));
   } catch (error) {
     return { error: "User login failed" };
   }

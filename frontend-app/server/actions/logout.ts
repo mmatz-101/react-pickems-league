@@ -5,7 +5,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const LogoutUser = action({}, async () => {
-  cookies().delete("pb_auth");
+  const cookieStore = await cookies();
+  cookieStore.delete("pb_auth");
 
   redirect("/");
 });

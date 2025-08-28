@@ -5,7 +5,8 @@ import Pocketbase from "pocketbase";
 
 export async function getPB() {
   const pb = new Pocketbase(process.env.POCKETBASE_URL);
-  const userToken = cookies().get("pb_auth")?.value;
+  const cookieStore = await cookies();
+  const userToken = cookieStore.get("pb_auth")?.value;
   if (userToken) {
     pb.authStore.loadFromCookie(userToken);
     return pb;
