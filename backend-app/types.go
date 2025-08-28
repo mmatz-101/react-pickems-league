@@ -137,43 +137,28 @@ type PickDataExpand struct {
 }
 
 type OddsSharkResponse struct {
-	Games map[string]OddsSharkGame `json:"scores"`
+	Matches []struct {
+		Matches []OddsSharkMatch `json:"matches"`
+	} `json:"matches"`
 }
 
-type OddsSharkGame struct {
-	GameID      int   `json:"id"`
-	Date        int64 `json:"date"`
-	StadiumInfo struct {
-		Roof string `json:"roof"`
-		Name string `json:"stadium"`
-	} `json:"stadium"`
+type OddsSharkMatch struct {
+	GameID int    `json:"id"`
+	Date   int64  `json:"date"`
 	Status string `json:"status"`
 	Teams  struct {
 		Home struct {
-			Names struct {
-				Abbreviation string `json:"abbreviation"`
-				DisplayName  string `json:"display_name"`
-				Name         string `json:"name"`
-				NickName     string `json:"nick_name"`
-				ShortName    string `json:"short_name"`
-			} `json:"names"`
-			Record string  `json:"record"`
-			Spread float32 `json:"spread"`
-			Score  int     `json:"score"`
+			Name      string  `json:"name"`
+			ShortName string  `json:"shortName"`
+			Spread    float32 `json:"odds"`
+			Score     int     `json:"score"`
 		} `json:"home"`
 		Away struct {
-			Names struct {
-				Abbreviation string `json:"abbreviation"`
-				DisplayName  string `json:"display_name"`
-				Name         string `json:"name"`
-				NickName     string `json:"nick_name"`
-				ShortName    string `json:"short_name"`
-			} `json:"names"`
-			Record string  `json:"record"`
-			Spread float32 `json:"spread"`
-			Score  int     `json:"score"`
+			Name      string  `json:"name"`
+			ShortName string  `json:"shortName"`
+			Spread    float32 `json:"odds"`
+			Score     int     `json:"score"`
 		} `json:"away"`
 	} `json:"teams"`
-	TvStation     string `json:"tvStation"`
-	TvStationName string `json:"tvStationName"`
+	TvStation string `json:"tvStation"`
 }

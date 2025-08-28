@@ -46,6 +46,8 @@ export default async function PicksPage() {
     filter: `week=${currentData.week} && user_team="${userTeam.id}"`,
   });
 
+  console.log(gamesNCAAFData[0])
+
   return (
     <>
       <Navbar />

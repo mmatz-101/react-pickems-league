@@ -8,3 +8,6 @@ backend-app/pb_data/
 # remove env varaibles
 .env
 .vercel
+
+# python fuzzy finding cache
+.cache/*

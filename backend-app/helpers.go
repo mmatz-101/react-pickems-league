@@ -83,24 +83,23 @@ func GetGameData(gameID string) (*GameData, error) {
 }
 
 // UpdateGameData updates the game's data in the games database
-func UpdateGameData(game OddsSharkGame, league string, week int, gameID string) error {
+func UpdateGameData(game OddsSharkMatch, league string, week int, gameID string) error {
 	date := time.Unix(game.Date, 0).Local().UTC()
 	formattedDate := date.Format("2006-01-02 15:04:05Z")
 	reqBody := GameDataRequestBody{
 		GameID:     fmt.Sprintf("%d", game.GameID),
 		Date:       formattedDate,
-		Stadium:    game.StadiumInfo.Name,
 		Status:     game.Status,
 		HomeSpread: game.Teams.Home.Spread,
 		AwaySpread: game.Teams.Away.Spread,
-		HomeTeam:   GetTeamID(game.Teams.Home.Names.Name),
-		HomeName:   game.Teams.Home.Names.Name,
-		AwayTeam:   GetTeamID(game.Teams.Away.Names.Name),
-		AwayName:   game.Teams.Away.Names.Name,
+		HomeTeam:   GetTeamID(game.Teams.Home.Name),
+		HomeName:   game.Teams.Home.Name,
+		AwayTeam:   GetTeamID(game.Teams.Away.Name),
+		AwayName:   game.Teams.Away.Name,
 		HomeScore:  game.Teams.Home.Score,
 		AwayScore:  game.Teams.Away.Score,
 		League:     strings.ToUpper(league),
-		TvStation:  game.TvStationName,
+		TvStation:  game.TvStation,
 		Week:       week,
 		PickWinner: GetGameWinner(game.Status, float32(game.Teams.Home.Score), game.Teams.Home.Spread, float32(game.Teams.Away.Score), game.Teams.Away.Spread),
 	}
@@ -125,24 +124,23 @@ func UpdateGameData(game OddsSharkGame, league string, week int, gameID string) 
 }
 
 // CreateGameData creates a new game in the games database
-func CreateGameData(game OddsSharkGame, league string, week int) error {
+func CreateGameData(game OddsSharkMatch, league string, week int) error {
 	date := time.Unix(game.Date, 0).Local().UTC()
 	formattedDate := date.Format("2006-01-02 15:04:05Z")
 	reqBody := GameDataRequestBody{
 		GameID:     fmt.Sprintf("%d", game.GameID),
 		Date:       formattedDate,
-		Stadium:    game.StadiumInfo.Name,
 		Status:     game.Status,
 		HomeSpread: game.Teams.Home.Spread,
 		AwaySpread: game.Teams.Away.Spread,
-		HomeTeam:   GetTeamID(game.Teams.Home.Names.Name),
-		HomeName:   game.Teams.Home.Names.Name,
-		AwayTeam:   GetTeamID(game.Teams.Away.Names.Name),
-		AwayName:   game.Teams.Away.Names.Name,
+		HomeTeam:   GetTeamID(game.Teams.Home.Name),
+		HomeName:   game.Teams.Home.Name,
+		AwayTeam:   GetTeamID(game.Teams.Away.Name),
+		AwayName:   game.Teams.Away.Name,
 		HomeScore:  game.Teams.Home.Score,
 		AwayScore:  game.Teams.Away.Score,
 		League:     strings.ToUpper(league),
-		TvStation:  game.TvStationName,
+		TvStation:  game.TvStation,
 		Week:       week,
 		PickWinner: GetGameWinner(game.Status, float32(game.Teams.Home.Score), game.Teams.Home.Spread, float32(game.Teams.Away.Score), game.Teams.Away.Spread),
 	}
@@ -181,7 +179,7 @@ func GetTeamID(teamName string) string {
 
 // GetTeamData fetches the team data from the team server
 func GetTeamData(teamName string) (*TeamData, error) {
-	url := DB_URL + "/api/collections/teams/records/" + "?filter=(" + url.QueryEscape(fmt.Sprintf(`name="%s"`, teamName)) + ")"
+	url := DB_URL + "/api/collections/teams/records/" + "?filter=(" + url.QueryEscape(fmt.Sprintf(`display_name="%s"`, teamName)) + ")"
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err

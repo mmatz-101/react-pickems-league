@@ -124,6 +124,7 @@ export default function GameCard({
   // check if the home_team or away_team that was provided is null
   let homeTeamImageValid = true;
   let homeTeamImageSrc = "";
+  console.log(game)
   if (game.expand.home_team) {
     if (!game.expand.home_team.image_src) {
       homeTeamImageValid = false;
@@ -156,11 +157,10 @@ export default function GameCard({
         <CardContent className="grid gap-4">
           <div
             onClick={awayTeamClick}
-            className={`flex items-center space-x-4 rounded-md border p-4  cursor-pointer ${
-              awayTeamSelected
-                ? "bg-primary/25 hover:bg-primary/20"
-                : "hover:bg-primary/5"
-            }`}
+            className={`flex items-center space-x-4 rounded-md border p-4  cursor-pointer ${awayTeamSelected
+              ? "bg-primary/25 hover:bg-primary/20"
+              : "hover:bg-primary/5"
+              }`}
           >
             <div className="h-50 w-50 flex items-center justify-center">
               {awayTeamImageSrc && (
@@ -182,11 +182,10 @@ export default function GameCard({
           </div>
           <div
             onClick={homeTeamClick}
-            className={`flex items-center space-x-4 rounded-md border p-4  cursor-pointer ${
-              homeTeamSelected
-                ? "bg-primary/25 hover:bg-primary/20"
-                : "hover:bg-primary/5"
-            }`}
+            className={`flex items-center space-x-4 rounded-md border p-4  cursor-pointer ${homeTeamSelected
+              ? "bg-primary/25 hover:bg-primary/20"
+              : "hover:bg-primary/5"
+              }`}
           >
             <div className="h-50 w-50 flex items-center justify-center">
               {homeTeamImageValid && (

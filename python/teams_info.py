@@ -1,13 +1,47 @@
 import argparse
 import csv
-
 import requests
+from difflib import get_close_matches
+import re
 
-NFL_URL = "https://www.oddsshark.com/api/scores/football/nfl/2024/1/?_format=json"
-NCAA_URL = "https://www.oddsshark.com/api/scores/football/ncaaf/2024/1/?_format=json"
+NFL_URL = "https://www.oddsshark.com/api/ticker/nfl?_format=json"
+NCAA_URL = "https://www.oddsshark.com/api/ticker/ncaaf?_format=json"
 DB_URL = "http://127.0.0.1:8090"
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0"
+}
 NFL_IMAGE_DATA = {}
-NCAA_IMAGE_DATE = {}
+NCAA_IMAGE_DATA = {}
+
+
+def _norm(s: str) -> str:
+    s = s.casefold().strip()
+    s = re.sub(r"[^a-z0-9 ]+", " ", s)
+    s = re.sub(r"\s+", " ", s)
+    return s
+
+
+def get_image_src_fuzzy_stdlib(
+    name: str, *image_maps: dict[str, str], cutoff=0.82
+) -> str:
+    if not name:
+        return ""
+    flat = {}
+    for m in image_maps:
+        flat.update(m)
+    norm_keys = {_norm(k): k for k in flat.keys()}
+
+    if name in flat:
+        return flat[name].strip()
+
+    norm = _norm(name)
+    if norm in norm_keys:
+        return flat[norm_keys[norm]].strip()
+
+    candidates = get_close_matches(norm, norm_keys.keys(), n=1, cutoff=cutoff)
+    if candidates:
+        return flat[norm_keys[candidates[0]]].strip()
+    return ""
 
 
 def check_team_exists(name: str) -> bool:
@@ -43,14 +77,20 @@ def get_team_id(name: str) -> str:
 
 
 def update_team(abrv, display_name, name, nick_name, short_name, league):
+    if league == "NFL":
+        src = get_image_src_fuzzy_stdlib(name, NFL_IMAGE_DATA, cutoff=0.50)
+    else:
+        src = get_image_src_fuzzy_stdlib(name, NCAA_IMAGE_DATA, cutoff=0.80)
+
+    if src == "image_src":
+        src = ""
     team = {
         "name_abbreviation": abrv,
         "display_name": display_name,
         "name": name,
         "nick_name": nick_name,
         "short_name": short_name,
-        "image_src": NFL_IMAGE_DATA.get(name, "").strip()
-        or NCAA_IMAGE_DATE.get(name, "").strip(),
+        "image_src": src,
         "league": league,
     }
 
@@ -68,14 +108,20 @@ def update_team(abrv, display_name, name, nick_name, short_name, league):
 
 
 def create_team(abrv, display_name, name, nick_name, short_name, league):
+    if league == "NFL":
+        src = get_image_src_fuzzy_stdlib(name, NFL_IMAGE_DATA, cutoff=0.50)
+    else:
+        src = get_image_src_fuzzy_stdlib(name, NCAA_IMAGE_DATA, cutoff=0.80)
+
+    if src == "image_src":
+        src = ""
     team = {
         "name_abbreviation": abrv,
         "display_name": display_name,
         "name": name,
         "nick_name": nick_name,
         "short_name": short_name,
-        "img_src": NFL_IMAGE_DATA.get(name, "").strip()
-        or NCAA_IMAGE_DATE.get(name, "").strip(),
+        "image_src": src,
         "league": league,
     }
 
@@ -91,64 +137,65 @@ def open_csv(file_name) -> dict[str, str]:
 
 
 def main():
-    response_nfl = requests.get(NFL_URL)
-    response_ncaa = requests.get(NCAA_URL)
+    response_nfl = requests.get(NFL_URL, headers=HEADERS)
+    response_ncaa = requests.get(NCAA_URL, headers=HEADERS)
     resp_json_nfl = response_nfl.json()
     resp_json_ncaa = response_ncaa.json()
 
     league_resp = [resp_json_nfl, resp_json_ncaa]
     league_value = "NFL"
     for league in league_resp:
-        for game in league["scores"].values():
-            # get home team info
-            home_abbr = game["teams"]["home"]["names"]["abbreviation"]
-            home_display_name = game["teams"]["home"]["names"]["display_name"]
-            home_name = game["teams"]["home"]["names"]["name"]
-            home_nick_name = game["teams"]["home"]["names"]["nick_name"]
-            home_short_name = game["teams"]["home"]["names"]["short_name"]
-            # get away team info
-            away_abbr = game["teams"]["away"]["names"]["abbreviation"]
-            away_display_name = game["teams"]["away"]["names"]["display_name"]
-            away_name = game["teams"]["away"]["names"]["name"]
-            away_nick_name = game["teams"]["away"]["names"]["nick_name"]
-            away_short_name = game["teams"]["away"]["names"]["short_name"]
+        for matches in league["matches"]:
+            for match in matches["matches"]:
+                # get home team info
+                home_abbr = match["teams"]["home"]["shortName"]
+                home_display_name = match["teams"]["home"]["name"]
+                home_name = match["teams"]["home"]["name"]
+                home_nick_name = match["teams"]["home"]["shortName"]
+                home_short_name = match["teams"]["home"]["shortName"]
+                # get away team info
+                away_abbr = match["teams"]["away"]["shortName"]
+                away_display_name = match["teams"]["away"]["name"]
+                away_name = match["teams"]["away"]["name"]
+                away_nick_name = match["teams"]["away"]["shortName"]
+                away_short_name = match["teams"]["away"]["shortName"]
 
-            if not check_team_exists(home_name):
-                create_team(
-                    home_abbr,
-                    home_display_name,
-                    home_name,
-                    home_nick_name,
-                    home_short_name,
-                    league_value,
-                )
-            else:
-                update_team(
-                    home_abbr,
-                    home_display_name,
-                    home_name,
-                    home_nick_name,
-                    home_short_name,
-                    league_value,
-                )
-            if not check_team_exists(away_name):
-                create_team(
-                    away_abbr,
-                    away_display_name,
-                    away_name,
-                    away_nick_name,
-                    away_short_name,
-                    league_value,
-                )
-            else:
-                update_team(
-                    away_abbr,
-                    away_display_name,
-                    away_name,
-                    away_nick_name,
-                    away_short_name,
-                    league_value,
-                )
+                if not check_team_exists(home_name):
+                    create_team(
+                        home_abbr,
+                        home_display_name,
+                        home_name,
+                        home_nick_name,
+                        home_short_name,
+                        league_value,
+                    )
+                else:
+                    update_team(
+                        home_abbr,
+                        home_display_name,
+                        home_name,
+                        home_nick_name,
+                        home_short_name,
+                        league_value,
+                    )
+                if not check_team_exists(away_name):
+                    create_team(
+                        away_abbr,
+                        away_display_name,
+                        away_name,
+                        away_nick_name,
+                        away_short_name,
+                        league_value,
+                    )
+                else:
+                    update_team(
+                        away_abbr,
+                        away_display_name,
+                        away_name,
+                        away_nick_name,
+                        away_short_name,
+                        league_value,
+                    )
         league_value = "NCAAF"
 
 
@@ -156,5 +203,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("team", type=str, help="Team name")
     NFL_IMAGE_DATA = open_csv("nfl_info.csv")
-    NCAA_IMAGE_DATE = open_csv("ncaa_info.csv")
+    NCAA_IMAGE_DATA = open_csv("ncaa_info.csv")
     main()
