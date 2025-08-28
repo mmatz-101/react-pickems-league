@@ -33,7 +33,7 @@ export default function SignupComponent() {
 
   const [error, setError] = useState("");
   const { execute, status } = useAction(SignupUser, {
-    onSuccess(data) {
+    onSuccess({ data }: { data?: { error?: string } }) {
       if (data?.error) {
         setError(data.error);
       }

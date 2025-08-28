@@ -7,9 +7,9 @@ import { revalidatePath } from "next/cache";
 import { ClientResponseError } from "pocketbase";
 import { currentDataType } from "./helpers/current-data";
 
-export const CurrentWeekUpdate = action(
-  CurrentWeekSchema,
-  async ({ currentWeek }) => {
+export const CurrentWeekUpdate = action
+  .inputSchema(CurrentWeekSchema)
+  .action(async ({ parsedInput: { currentWeek } }) => {
     try {
       const pb = await getPB();
       // check if current week is present in db
@@ -29,5 +29,5 @@ export const CurrentWeekUpdate = action(
       }
     }
   },
-);
+  );
 

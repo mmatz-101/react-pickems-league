@@ -8,6 +8,8 @@ const moreInformationSchema = z.object({
   id: z.string(),
 });
 
-export const moreInformation = action(moreInformationSchema, async ({ id }) => {
-  redirect(`/user/picks/${id}`);
-});
+export const moreInformation = action
+  .inputSchema(moreInformationSchema)
+  .action(async ({ parsedInput: { id } }) => {
+    redirect(`/user/picks/${id}`);
+  });

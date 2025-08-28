@@ -99,7 +99,7 @@ export default function Navbar() {
                 size={16}
                 className="text-sm font-medium text-muted-foreground hover:text-foreground hover:cursor-pointer"
                 onClick={async () => {
-                  await LogoutUser({});
+                  await LogoutUser();
                 }}
               />
             </TooltipTrigger>
@@ -160,7 +160,7 @@ export default function Navbar() {
                   size={16}
                   className="text-sm font-medium text-muted-foreground hover:text-foreground hover:cursor-pointer"
                   onClick={async () => {
-                    await LogoutUser({});
+                    await LogoutUser();
                   }}
                 />
               </TooltipTrigger>

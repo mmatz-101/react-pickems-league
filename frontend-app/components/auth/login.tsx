@@ -31,7 +31,7 @@ export default function LoginComponent() {
 
   const [error, setError] = useState("");
   const { execute, status } = useAction(LoginUser, {
-    onSuccess(data) {
+    onSuccess({ data }: { data?: { error?: string } }) {
       if (data?.error) {
         setError(data.error);
       }
