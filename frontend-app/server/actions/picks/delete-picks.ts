@@ -21,7 +21,6 @@ export const deletePick = action(deleteSchema, async ({ id, gameID }) => {
   const game: gameType = await pb
     .collection("games")
     .getFirstListItem(`id="${gameID}"`);
-  console.log(game);
   try {
     if (!currentData.allow_picks) {
       return { error: "week is locked." };

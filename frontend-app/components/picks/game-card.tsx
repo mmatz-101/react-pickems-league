@@ -109,7 +109,7 @@ export default function GameCard({
       }
     },
     onError: (data) => {
-      console.log(data);
+      console.error(data);
       toast({
         title: "Server Error",
         description:
@@ -122,7 +122,6 @@ export default function GameCard({
   // check if the home_team or away_team that was provided is null
   let homeTeamImageValid = true;
   let homeTeamImageSrc = "";
-  console.log(game)
   if (game.expand.home_team) {
     if (!game.expand.home_team.image_src) {
       homeTeamImageValid = false;

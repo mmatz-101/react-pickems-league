@@ -31,7 +31,7 @@ export const enrollUser = action(schema, async ({ userID }) => {
         enrolled: true,
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
 
     revalidatePath("/user/weekly-winner");
@@ -45,7 +45,7 @@ export const enrollUser = action(schema, async ({ userID }) => {
       enrolled: true,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 
   revalidatePath("/user/weekly-winner");

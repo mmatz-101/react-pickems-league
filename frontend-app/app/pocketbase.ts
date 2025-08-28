@@ -11,7 +11,7 @@ export async function getPB() {
     pb.authStore.loadFromCookie(userToken);
     return pb;
   } else {
-    console.log("No user token found creating.");
+    console.info("No user token found creating.");
     const pb = new Pocketbase(process.env.POCKETBASE_URL);
     return pb;
   }

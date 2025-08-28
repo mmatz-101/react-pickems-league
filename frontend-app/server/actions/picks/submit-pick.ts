@@ -40,7 +40,6 @@ export const submitPick = action(
       let returnInfo: ReturnInfo = {
         error: "game has already started/completed.",
       };
-      console.log("game has already started/completed.");
       if (id) {
         returnInfo.update = true;
       }
@@ -78,14 +77,13 @@ export const submitPick = action(
     if (pickType === "REGULAR") {
       // TEMPORARY FREE FOR ALL ON PICKS THIS WEEK #####################################
       const picks: pickType[] = await pb.collection("picks").getFullList({
-        filter: `user_team="${userTeam.id}" && week=${
-          currentData.week
-        } && pick_type="REGULAR"`,
-      // ###############################################################################
-      // const picks: pickType[] = await pb.collection("picks").getFullList({
-      //   filter: `user_team="${userTeam.id}" && week=${
-      //     currentData.week
-      //   } && game.league="${league}" && pick_type="REGULAR"`,
+        filter: `user_team="${userTeam.id}" && week=${currentData.week
+          } && pick_type="REGULAR"`,
+        // ###############################################################################
+        // const picks: pickType[] = await pb.collection("picks").getFullList({
+        //   filter: `user_team="${userTeam.id}" && week=${
+        //     currentData.week
+        //   } && game.league="${league}" && pick_type="REGULAR"`,
       });
       if (id) {
         if (picks.length > maxPicks) {
@@ -103,9 +101,8 @@ export const submitPick = action(
     } else {
       // TEMPORARY FREE FOR ALL ON PICKS THIS WEEK #####################################
       const picks = await pb.collection("picks").getFullList({
-        filter: `user_team="${userTeam.id}" && week=${
-          currentData.week
-        } && pick_type="BINNY"`,
+        filter: `user_team="${userTeam.id}" && week=${currentData.week
+          } && pick_type="BINNY"`,
       });
       // ###############################################################################
       // const picks = await pb.collection("picks").getFullList({
@@ -164,7 +161,7 @@ export const submitPick = action(
         return { success: "pick created", record };
       }
     } catch (error: any) {
-      console.log(error.data);
+      console.error(error.data);
       return { error: "server error" };
     }
   },

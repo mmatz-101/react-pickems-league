@@ -9,6 +9,5 @@ const moreInformationSchema = z.object({
 });
 
 export const moreInformation = action(moreInformationSchema, async ({ id }) => {
-  console.log("Redirect to more information page");
   redirect(`/user/picks/${id}`);
 });

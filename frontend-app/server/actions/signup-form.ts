@@ -26,7 +26,7 @@ export const SignupUser = action(
       // send an email verification request
       await pb.collection("users").requestVerification(email);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return { error: "User creation failed, try refreshing the page." };
     }
     // redirect cannot be inside try and catch block
