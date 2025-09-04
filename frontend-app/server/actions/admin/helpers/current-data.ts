@@ -12,4 +12,6 @@ export type currentDataType = {
   max_ncaaf_binny_picks: number;
   regular_point_value: number;
   binny_point_value: number;
+  start_date: string;
+  end_date: string;
 };
