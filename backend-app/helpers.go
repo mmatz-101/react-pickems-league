@@ -180,7 +180,7 @@ func GetTeamID(teamName string, league string) string {
 // GetTeamData fetches the team data from the team server
 func GetTeamData(teamName string, league string) (*TeamData, error) {
 	league = strings.ToUpper(league) // verify that league is upper case
-	url := DB_URL + "/api/collections/teams/records/" + "?filter=(" + url.QueryEscape(fmt.Sprintf(`display_name="%s"`, teamName)) + url.QueryEscape(fmt.Sprintf(`league="%s"`, league)) + ")"
+	url := DB_URL + "/api/collections/teams/records/" + "?filter=(" + url.QueryEscape(fmt.Sprintf(`display_name="%s"`, teamName)) + url.QueryEscape(" && ") + url.QueryEscape(fmt.Sprintf(`league="%s"`, league)) + ")"
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err

@@ -1,13 +1,12 @@
 import argparse
 import csv
-import json
 import requests
 from difflib import get_close_matches
 from typing import Literal, Mapping
 
 NFL_URL = "https://www.oddsshark.com/api/ticker/nfl?_format=json"
 NCAA_URL = "https://www.oddsshark.com/api/ticker/ncaaf?_format=json"
-DB_URL = "https://db.pickemsleague.com"
+DB_URL = "http://127.0.0.1:8090"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0"
 }
@@ -130,7 +129,7 @@ def create_team(abrv, display_name, name, nick_name, short_name, league):
 
     resp = requests.post(f"{DB_URL}/api/collections/teams/records", json=team)
     if resp.status_code != 200:
-        print(f"Error uploading team {team['name']} to database")
+        print(f"Error creating team {team['name']} to database")
 
 
 def open_csv(file_name) -> dict[str, str]:
@@ -145,7 +144,7 @@ def main():
     resp_json_nfl = response_nfl.json()
     resp_json_ncaa = response_ncaa.json()
 
-    league_resp = [resp_json_nfl, resp_json_ncaa]
+    league_resp = [resp_json_ncaa]
     league_value = "NCAAF"
     for league in league_resp:
         for matches in league["matches"]:
