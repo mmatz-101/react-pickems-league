@@ -118,7 +118,20 @@ func GetOddSharkData() {
 	}
 }
 
-// UpdatePicksResults
+// UpdatePicksResults retrieves the current application state and, if result
+// updates are enabled, fetches all picks for the current week from the database.
+// For each pick, it checks whether the associated game has a status of "FINAL".
+// If so, the pick's result is recalculated and persisted back to the database.
+//
+// Notes:
+//   - Picks are retrieved with game data expanded via the API.
+//   - If the picks response spans multiple pages (TotalPages > 1), the function
+//     aborts with a fatal log since pagination handling is not implemented.
+//   - Errors encountered during data retrieval, decoding, or update operations
+//     are logged and cause early returns.
+//
+// This function is intended to be run periodically (e.g., after games conclude)
+// to ensure that user picks reflect the final game outcomes.
 func UpdatePicksResults() {
 	// get the current data from the current table in database
 	currentData, err := GetCurrentData()

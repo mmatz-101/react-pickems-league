@@ -59,7 +59,7 @@ func GetCurrentData() (*CurrentData, error) {
 	return &data.Items[0], nil
 }
 
-// GetGame fetches the game data from the ID of the game. Will return nil, nil if there were no errors
+// GetGameData fetches the game data from the ID of the game. Will return nil, nil if there were no errors
 // and the game was not found.
 func GetGameData(gameID string) (*GameData, error) {
 	resp, err := http.Get(fmt.Sprintf(DB_URL+`/api/collections/games/records/?filter=game_id="%s"`, gameID))
@@ -92,9 +92,9 @@ func UpdateGameData(game OddsSharkMatch, league string, week int, gameID string)
 		Status:     game.Status,
 		HomeSpread: game.Teams.Home.Spread,
 		AwaySpread: game.Teams.Away.Spread,
-		HomeTeam:   GetTeamID(game.Teams.Home.Name),
+		HomeTeam:   GetTeamID(game.Teams.Home.Name, league),
 		HomeName:   game.Teams.Home.Name,
-		AwayTeam:   GetTeamID(game.Teams.Away.Name),
+		AwayTeam:   GetTeamID(game.Teams.Away.Name, league),
 		AwayName:   game.Teams.Away.Name,
 		HomeScore:  game.Teams.Home.Score,
 		AwayScore:  game.Teams.Away.Score,
@@ -133,9 +133,9 @@ func CreateGameData(game OddsSharkMatch, league string, week int) error {
 		Status:     game.Status,
 		HomeSpread: game.Teams.Home.Spread,
 		AwaySpread: game.Teams.Away.Spread,
-		HomeTeam:   GetTeamID(game.Teams.Home.Name),
+		HomeTeam:   GetTeamID(game.Teams.Home.Name, league),
 		HomeName:   game.Teams.Home.Name,
-		AwayTeam:   GetTeamID(game.Teams.Away.Name),
+		AwayTeam:   GetTeamID(game.Teams.Away.Name, league),
 		AwayName:   game.Teams.Away.Name,
 		HomeScore:  game.Teams.Home.Score,
 		AwayScore:  game.Teams.Away.Score,
@@ -165,8 +165,8 @@ func CreateGameData(game OddsSharkMatch, league string, week int) error {
 }
 
 // GetTeamID fetches the team ID from the team server
-func GetTeamID(teamName string) string {
-	team, err := GetTeamData(teamName)
+func GetTeamID(teamName string, league string) string {
+	team, err := GetTeamData(teamName, league)
 	if err != nil {
 		log.Println("Error loading team data.", err)
 		return ""
@@ -178,8 +178,9 @@ func GetTeamID(teamName string) string {
 }
 
 // GetTeamData fetches the team data from the team server
-func GetTeamData(teamName string) (*TeamData, error) {
-	url := DB_URL + "/api/collections/teams/records/" + "?filter=(" + url.QueryEscape(fmt.Sprintf(`display_name="%s"`, teamName)) + ")"
+func GetTeamData(teamName string, league string) (*TeamData, error) {
+	league = strings.ToUpper(league) // verify that league is upper case
+	url := DB_URL + "/api/collections/teams/records/" + "?filter=(" + url.QueryEscape(fmt.Sprintf(`display_name="%s"`, teamName)) + url.QueryEscape(fmt.Sprintf(`league="%s"`, league)) + ")"
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -236,41 +237,51 @@ func UpdatePickData(pick PickDataExpand) error {
 
 // UpdatePickResult updates the pick struct based on the spread at the time of the pick
 func UpdatePickResult(pick PickDataExpand, currentData CurrentData) PickDataExpand {
-	// check the spread against the spread at the time of the pick not against the current pick line.
-	if pick.TeamSelected == "HOME" {
-		if pick.PickSpread+float32(pick.Expand.Game.HomeScore) > float32(pick.Expand.Game.AwayScore) {
+	// Determine the points based on which team was selected and the spread.
+	switch pick.TeamSelected {
+	case "HOME":
+		adjusted := pick.PickSpread + float32(pick.Expand.Game.HomeScore)
+		opponent := float32(pick.Expand.Game.AwayScore)
+
+		switch {
+		case adjusted > opponent:
 			pick.ResultPoints = currentData.RegularPointValue
 			pick.ResultText = "WIN"
 			if pick.PickType == "BINNY" {
 				pick.ResultPoints = currentData.BinnyPointValue
 			}
-		} else if pick.PickSpread+float32(pick.Expand.Game.HomeScore) == float32(pick.Expand.Game.AwayScore) {
+		case adjusted == opponent:
 			pick.ResultPoints = currentData.RegularPointValue / 2
 			pick.ResultText = "PUSH"
 			if pick.PickType == "BINNY" {
 				pick.ResultPoints = 0
 			}
-		} else {
+		default:
 			pick.ResultPoints = 0
 			pick.ResultText = "LOST"
 			if pick.PickType == "BINNY" {
 				pick.ResultPoints = -currentData.BinnyPointValue
 			}
 		}
-	} else if pick.TeamSelected == "AWAY" {
-		if pick.PickSpread+float32(pick.Expand.Game.AwayScore) > float32(pick.Expand.Game.HomeScore) {
+
+	case "AWAY":
+		adjusted := pick.PickSpread + float32(pick.Expand.Game.AwayScore)
+		opponent := float32(pick.Expand.Game.HomeScore)
+
+		switch {
+		case adjusted > opponent:
 			pick.ResultPoints = currentData.RegularPointValue
 			pick.ResultText = "WIN"
 			if pick.PickType == "BINNY" {
 				pick.ResultPoints = currentData.BinnyPointValue
 			}
-		} else if pick.PickSpread+float32(pick.Expand.Game.AwayScore) == float32(pick.Expand.Game.HomeScore) {
+		case adjusted == opponent:
 			pick.ResultPoints = currentData.RegularPointValue / 2
 			pick.ResultText = "PUSH"
 			if pick.PickType == "BINNY" {
 				pick.ResultPoints = 0
 			}
-		} else {
+		default:
 			pick.ResultPoints = 0
 			pick.ResultText = "LOST"
 			if pick.PickType == "BINNY" {

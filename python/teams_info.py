@@ -1,12 +1,13 @@
 import argparse
 import csv
+import json
 import requests
 from difflib import get_close_matches
-import re
+from typing import Literal, Mapping
 
 NFL_URL = "https://www.oddsshark.com/api/ticker/nfl?_format=json"
 NCAA_URL = "https://www.oddsshark.com/api/ticker/ncaaf?_format=json"
-DB_URL = "http://127.0.0.1:8090"
+DB_URL = "https://db.pickemsleague.com"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0"
 }
@@ -15,37 +16,48 @@ NCAA_IMAGE_DATA = {}
 
 
 def _norm(s: str) -> str:
-    s = s.casefold().strip()
-    s = re.sub(r"[^a-z0-9 ]+", " ", s)
-    s = re.sub(r"\s+", " ", s)
-    return s
+    return " ".join(s.lower().split())
 
 
-def get_image_src_fuzzy_stdlib(
-    name: str, *image_maps: dict[str, str], cutoff=0.82
-) -> str:
-    if not name:
+def _lookup_in_map(name: str, mapping: Mapping[str, str], cutoff: float) -> str:
+    if not mapping:
         return ""
-    flat = {}
-    for m in image_maps:
-        flat.update(m)
-    norm_keys = {_norm(k): k for k in flat.keys()}
 
-    if name in flat:
-        return flat[name].strip()
+    # exact key
+    if name in mapping:
+        return mapping[name].strip()
 
+    # normalized exact
     norm = _norm(name)
+    norm_keys = {_norm(k): k for k in mapping.keys()}
     if norm in norm_keys:
-        return flat[norm_keys[norm]].strip()
+        return mapping[norm_keys[norm]].strip()
 
+    # fuzzy only within THIS map
     candidates = get_close_matches(norm, norm_keys.keys(), n=1, cutoff=cutoff)
     if candidates:
-        return flat[norm_keys[candidates[0]]].strip()
+        return mapping[norm_keys[candidates[0]]].strip()
+
     return ""
 
 
-def check_team_exists(name: str) -> bool:
-    params = {"filter": f'(name="{name}")'}
+def get_image_src_fuzzy_stdlib(
+    name: str, *image_maps: Mapping[str, str], cutoff: float = 0.82
+) -> str:
+    if not name:
+        return ""
+
+    # Try each map independently, in order. Stop at the first hit.
+    for m in image_maps:
+        hit = _lookup_in_map(name, m, cutoff)
+        if hit:
+            return hit
+
+    return ""
+
+
+def check_team_exists(name: str, league: Literal["NFL", "NCAAF"]) -> bool:
+    params = {"filter": f'(name="{name}" && league="{league}")'}
     resp = requests.get(f"{DB_URL}/api/collections/teams/records/", params=params)
     if resp.status_code != 200:
         print(f"Error fetching {name} from database")
@@ -60,12 +72,9 @@ def check_team_exists(name: str) -> bool:
     return True
 
 
-def get_team_id(name: str) -> str:
-    params = {"filter": f'(name="{name}")'}
-    resp = requests.get(
-        f"{DB_URL}/api/collections/teams/records/",
-        params=params,
-    )
+def get_team_id(name: str, league: Literal["NFL", "NCAAF"]) -> str:
+    params = {"filter": f'(name="{name}" && league="{league}")'}
+    resp = requests.get(f"{DB_URL}/api/collections/teams/records/", params=params)
     if resp.status_code != 200:
         print(f"Error fetching id for {name} from database")
         print(resp.url)
@@ -81,9 +90,6 @@ def update_team(abrv, display_name, name, nick_name, short_name, league):
         src = get_image_src_fuzzy_stdlib(name, NFL_IMAGE_DATA, cutoff=0.50)
     else:
         src = get_image_src_fuzzy_stdlib(name, NCAA_IMAGE_DATA, cutoff=0.80)
-
-    if src == "image_src":
-        src = ""
     team = {
         "name_abbreviation": abrv,
         "display_name": display_name,
@@ -94,13 +100,13 @@ def update_team(abrv, display_name, name, nick_name, short_name, league):
         "league": league,
     }
 
-    team_id = get_team_id(name)
+    team_id = get_team_id(name, league)
 
     resp = requests.patch(
         f"{DB_URL}/api/collections/teams/records/{team_id}", json=team
     )
     if resp.status_code != 200:
-        print(f"Error uploading team {name} to database")
+        print(f"Error uploading team {name} to database: {team_id}")
         print(resp.url)
         print(resp.status_code)
         print(resp.json())
@@ -112,9 +118,6 @@ def create_team(abrv, display_name, name, nick_name, short_name, league):
         src = get_image_src_fuzzy_stdlib(name, NFL_IMAGE_DATA, cutoff=0.50)
     else:
         src = get_image_src_fuzzy_stdlib(name, NCAA_IMAGE_DATA, cutoff=0.80)
-
-    if src == "image_src":
-        src = ""
     team = {
         "name_abbreviation": abrv,
         "display_name": display_name,
@@ -143,7 +146,7 @@ def main():
     resp_json_ncaa = response_ncaa.json()
 
     league_resp = [resp_json_nfl, resp_json_ncaa]
-    league_value = "NFL"
+    league_value = "NCAAF"
     for league in league_resp:
         for matches in league["matches"]:
             for match in matches["matches"]:
@@ -160,7 +163,7 @@ def main():
                 away_nick_name = match["teams"]["away"]["shortName"]
                 away_short_name = match["teams"]["away"]["shortName"]
 
-                if not check_team_exists(home_name):
+                if not check_team_exists(home_name, league_value):
                     create_team(
                         home_abbr,
                         home_display_name,
@@ -178,7 +181,7 @@ def main():
                         home_short_name,
                         league_value,
                     )
-                if not check_team_exists(away_name):
+                if not check_team_exists(away_name, league_value):
                     create_team(
                         away_abbr,
                         away_display_name,
