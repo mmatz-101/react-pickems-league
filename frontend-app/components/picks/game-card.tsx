@@ -120,21 +120,15 @@ export default function GameCard({
   });
 
   // check if the home_team or away_team that was provided is null
-  let homeTeamImageValid = true;
   let homeTeamImageSrc = "";
   if (game.expand.home_team) {
-    if (!game.expand.home_team.image_src) {
-      homeTeamImageValid = false;
-    } else {
+    if (game.expand.home_team.image_src) {
       homeTeamImageSrc = game.expand.home_team.image_src;
     }
   }
-  let awayTeamImageValid = true;
   let awayTeamImageSrc = "";
   if (game.expand.away_team) {
-    if (!game.expand.away_team.image_src) {
-      awayTeamImageValid = false;
-    } else {
+    if (game.expand.away_team.image_src) {
       awayTeamImageSrc = game.expand.away_team.image_src.trim();
     }
   }
@@ -154,13 +148,17 @@ export default function GameCard({
         <CardContent className="grid gap-4">
           <div
             onClick={awayTeamClick}
-            className={`flex items-center space-x-4 rounded-md border p-4  cursor-pointer ${awayTeamSelected
-              ? "bg-primary/25 hover:bg-primary/20"
-              : "hover:bg-primary/5"
-              }`}
+            className={`flex items-center space-x-4 rounded-md border p-4 cursor-pointer
+                ${
+                  awayTeamSelected
+                    ? "bg-primary/25 hover:bg-primary/20"
+                    : "hover:bg-primary/5"
+                }
+                ${game.away_spread === 0 ? "opacity-50 pointer-events-none" : ""}
+              `}
           >
             <div className="h-50 w-50 flex items-center justify-center">
-              {awayTeamImageValid && (
+              {awayTeamImageSrc && (
                 <Image
                   src={awayTeamImageSrc}
                   alt="Logo"
@@ -175,17 +173,21 @@ export default function GameCard({
               </p>
               <p className="text-sm text-muted-foreground">record</p>
             </div>
-            <span>{game.away_spread}</span>
+            <span>{game.away_spread === 0 ? "-" : game.away_spread}</span>
           </div>
           <div
             onClick={homeTeamClick}
-            className={`flex items-center space-x-4 rounded-md border p-4  cursor-pointer ${homeTeamSelected
-              ? "bg-primary/25 hover:bg-primary/20"
-              : "hover:bg-primary/5"
-              }`}
+            className={`flex items-center space-x-4 rounded-md border p-4 cursor-pointer
+      ${
+        homeTeamSelected
+          ? "bg-primary/25 hover:bg-primary/20"
+          : "hover:bg-primary/5"
+      }
+      ${game.home_spread === 0 ? "opacity-50 pointer-events-none" : ""}
+    `}
           >
             <div className="h-50 w-50 flex items-center justify-center">
-              {homeTeamImageValid && (
+              {homeTeamImageSrc && (
                 <Image
                   src={homeTeamImageSrc}
                   alt="Logo"
@@ -200,7 +202,7 @@ export default function GameCard({
               </p>
               <p className="text-sm text-muted-foreground">record</p>
             </div>
-            <span>{game.home_spread}</span>
+            <span>{game.home_spread === 0 ? "-" : game.home_spread}</span>
           </div>
         </CardContent>
         <CardFooter
