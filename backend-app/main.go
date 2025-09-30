@@ -168,16 +168,14 @@ func UpdatePicksResults() {
 	// loop through PickDataResponse.Items and update the picks table in the database
 	for _, pick := range picksData.Items {
 		// check if the game is FINAL
-		if pick.Expand.Game.Status != "FINAL" {
-			continue
-		}
-
-		pick = UpdatePickResult(pick, *currentData)
-		// update the pick in the database
-		err = UpdatePickData(pick)
-		if err != nil {
-			log.Println("Error updating pick:", pick.ID, err)
-			return
+		if pick.Expand.Game.Status == "FINAL" || pick.Expand.Game.Status == "FINAL OT" {
+			pick = UpdatePickResult(pick, *currentData)
+			// update the pick in the database
+			err = UpdatePickData(pick)
+			if err != nil {
+				log.Println("Error updating pick:", pick.ID, err)
+				return
+			}
 		}
 	}
 }
