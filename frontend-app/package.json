@@ -31,7 +31,7 @@
     "eslint-config-next": "^15.5.2",
     "latest": "^0.2.0",
     "lucide-react": "^0.379.0",
-    "next": "^15.5.2",
+    "next": "15.5.7",
     "next-safe-action": "^8.0.10",
     "nextjs": "^0.0.3",
     "pocketbase": "^0.21.5",
