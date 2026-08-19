@@ -15,6 +15,9 @@ export type gameType = {
   id: string;
   pick_winner: string;
   league: "NFL" | "NCAAF";
+  sport?: "NFL" | "NCAAF";
+  provider_week?: number;
+  week_record?: string;
   stadium: string;
   status: string;
   tv_station: string;

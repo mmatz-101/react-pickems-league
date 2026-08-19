@@ -43,9 +43,13 @@ const gameDateDisplay: (dateString: string) => string = (dateString) => {
 export default function GameCard({
   game,
   pick,
+  leagueTeam,
+  weekRecord,
 }: {
   game: gameTypeExpanded;
   pick: pickType | undefined;
+  leagueTeam: string;
+  weekRecord: string;
 }) {
   const [homeTeamSelected, setHomeTeamSelected] = useState(false);
   function homeTeamClick() {
@@ -243,6 +247,8 @@ export default function GameCard({
                   league: game.league,
                   teamSelected: homeTeamSelected ? "HOME" : "AWAY",
                   pickType: pickTypeSelected,
+                  leagueTeam,
+                  weekRecord,
                 });
               }}
             >

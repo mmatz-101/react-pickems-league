@@ -3,11 +3,9 @@
 import { getPB } from "@/app/pocketbase";
 import { action } from "@/lib/safe-action";
 import { SubmitPickSchema } from "@/schema/submit-pick";
-import { currentDataType } from "../admin/helpers/current-data";
 import { revalidatePath } from "next/cache";
 import { gameType } from "./helpers/game-data";
-import { pickType, userTeamType } from "./helpers/pick-data";
-import { getUsersTeam } from "@/lib/utils";
+import { pickType } from "./helpers/pick-data";
 
 export interface ReturnInfo {
   error?: string;
@@ -17,138 +15,55 @@ export interface ReturnInfo {
 
 export const submitPick = action
   .inputSchema(SubmitPickSchema)
-  .action(async ({ parsedInput: { id, game, league, teamSelected, pickType } }) => {
+  .action(async ({ parsedInput: { id, game, league, leagueTeam, weekRecord, teamSelected, pickType } }) => {
     const pb = await getPB();
-    // get current data
-    const currentData: currentDataType = await pb
-      .collection("current")
-      .getFirstListItem("");
-    // get the game data
-    const gameData: gameType = await pb
-      .collection("games")
-      .getFirstListItem(`id="${game}"`);
-    // check if the week is locked
-    if (!currentData.allow_picks) {
-      let returnInfo: ReturnInfo = { error: "week is locked." };
-      if (id) {
-        returnInfo.update = true;
-      }
-      return returnInfo;
+    const week = await pb.collection("weeks").getOne(weekRecord);
+    const gameData: gameType = await pb.collection("games").getOne(game);
+
+    if (gameData.week_record !== weekRecord) {
+      return { error: "Game is not part of the selected league week." };
     }
-    // check if the game has started
+    if (!week.allow_picks || week.status !== "OPEN") {
+      return { error: "Week is locked.", update: Boolean(id) };
+    }
     if (!isNowBeforeGame(gameData)) {
-      let returnInfo: ReturnInfo = {
-        error: "game has already started/completed.",
-      };
-      if (id) {
-        returnInfo.update = true;
-      }
-      return returnInfo;
-    }
-    // get the user's team
-    const userTeam: userTeamType = await getUsersTeam(pb.authStore.model!.id);
-    if (!userTeam) {
-      return { error: "user's team not found" };
-    }
-    // get the max amount of picks based on the league
-    let maxPicks = 0;
-    let maxBinnyPicks = 0;
-    if (league === "NFL") {
-      maxPicks = currentData.max_nfl_picks;
-      maxBinnyPicks = currentData.max_nfl_binny_picks;
-    } else {
-      maxPicks = currentData.max_ncaaf_picks;
-      maxBinnyPicks = currentData.max_ncaaf_binny_picks;
+      return { error: "Game has already started/completed.", update: Boolean(id) };
     }
 
-    // check how many games the user has picked.
-    if (pickType === "REGULAR") {
-      const picks: pickType[] = await pb.collection("picks").getFullList({
-        filter: `user_team="${userTeam.id}" && week=${currentData.week
-          } && game.league="${league}" && pick_type="REGULAR"`,
-      });
-      if (id) {
-        if (picks.length > maxPicks) {
-          return {
-            error: `You have too many REGULAR ${league} picks for this  week.`,
-          };
-        }
-      } else {
-        if (picks.length >= maxPicks) {
-          return {
-            error: `You have too many REGULAR ${league} picks for this  week.`,
-          };
-        }
-      }
-    } else {
-      const picks = await pb.collection("picks").getFullList({
-        filter: `user_team="${userTeam.id}" && week=${currentData.week
-          } && game.league="${league}" && pick_type="BINNY"`,
-      });
-      if (id) {
-        if (picks.length > maxBinnyPicks) {
-          return {
-            error: `You have too many BINNY ${league} picks for this week.`,
-          };
-        }
-      } else {
-        if (picks.length >= maxBinnyPicks) {
-          return {
-            error: `You have too many BINNY ${league} picks for this week.`,
-          };
-        }
-      }
+    const maxPicks = league === "NFL" ? week.max_nfl_picks : week.max_ncaaf_picks;
+    const maxBinnyPicks = league === "NFL" ? week.max_nfl_binny_picks : week.max_ncaaf_binny_picks;
+    const existingPicks: pickType[] = await pb.collection("picks").getFullList({
+      filter: `league_team="${leagueTeam}" && week_record="${weekRecord}" && game.sport="${league}" && pick_type="${pickType}"`,
+    });
+    const limit = pickType === "REGULAR" ? maxPicks : maxBinnyPicks;
+    if (existingPicks.length >= limit && !id) {
+      return { error: `You have too many ${pickType} ${league} picks for this week.` };
     }
-    // check if the pick is choosing the favorite or underdog
-    let favOrUnd = "";
-    if (teamSelected === "HOME" && gameData.home_spread < 0) {
-      favOrUnd = "FAV";
-    } else if (teamSelected === "HOME" && gameData.home_spread > 0) {
-      favOrUnd = "UND";
-    } else if (teamSelected === "AWAY" && gameData.away_spread < 0) {
-      favOrUnd = "FAV";
-    } else {
-      favOrUnd = "UND";
+    if (id) {
+      return { error: "Pick is already created.", update: true };
     }
 
-    let pickSpread = 0;
-    if (teamSelected === "HOME") {
-      pickSpread = gameData.home_spread;
-    } else {
-      pickSpread = gameData.away_spread;
-    }
-    // attempty to create/update picks
+    const pickSpread = teamSelected === "HOME" ? gameData.home_spread : gameData.away_spread;
+    const favOrUnd = pickSpread < 0 ? "FAV" : "UND";
+
     try {
-      if (id) {
-        revalidatePath("/user/picks");
-        return { error: "pick is already created." };
-      } else {
-        const record = await pb.collection("picks").create({
-          user_team: userTeam.id,
-          game: game,
-          week: currentData.week,
-          team_selected: teamSelected,
-          pick_type: pickType,
-          pick_spread: pickSpread,
-          fav_or_und: favOrUnd,
-        });
-        revalidatePath("/user/picks");
-        return { success: "pick created", record };
-      }
-    } catch (error: any) {
-      console.error(error.data);
-      return { error: "server error" };
+      const record = await pb.collection("picks").create({
+        user_team: "",
+        league_team: leagueTeam,
+        week_record: weekRecord,
+        game,
+        week: week.number,
+        team_selected: teamSelected,
+        pick_type: pickType,
+        pick_spread: pickSpread,
+        fav_or_und: favOrUnd,
+      });
+      revalidatePath("/user/picks");
+      return { success: "Pick created", record };
+    } catch (error) {
+      console.error(error);
+      return { error: "Server error" };
     }
-  },
-  );
+  });
 
-const isNowBeforeGame = (game: gameType): boolean => {
-  // Convert the date string to a Date object
-  const gameDate = new Date(game.date);
-
-  // Get the current date and time
-  const now = new Date();
-
-  // Compare the game date to the current date
-  return now <= gameDate;
-}
+const isNowBeforeGame = (game: gameType): boolean => new Date() <= new Date(game.date);
