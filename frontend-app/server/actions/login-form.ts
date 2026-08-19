@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 
 export const LoginUser = action
   .inputSchema(LoginSchema)
-  .action(async ({ parsedInput: { email, password } }) => {
+  .action(async ({ parsedInput: { email, password, redirectTo } }) => {
     try {
       const pb = await getPB();
       const cookieStore = await cookies();
@@ -18,5 +18,5 @@ export const LoginUser = action
     } catch (error) {
       return { error: "User login failed" };
     }
-    redirect("/user/dashboard");
+    redirect(redirectTo ?? "/user/dashboard");
   });

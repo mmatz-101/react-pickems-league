@@ -7,7 +7,7 @@ import { SignupSchema } from "@/schema/signup-schema";
 
 export const SignupUser = action
   .inputSchema(SignupSchema)
-  .action(async ({ parsedInput: { firstName, lastName, email, password } }) => {
+  .action(async ({ parsedInput: { firstName, lastName, email, password, redirectTo } }) => {
     try {
       // creating user data
       const userData = {
@@ -30,6 +30,9 @@ export const SignupUser = action
       return { error: "User creation failed, try refreshing the page." };
     }
     // redirect cannot be inside try and catch block
-    redirect("/login");
+    const loginUrl = redirectTo
+      ? `/login?redirect=${encodeURIComponent(redirectTo)}`
+      : "/login";
+    redirect(loginUrl);
   },
   );

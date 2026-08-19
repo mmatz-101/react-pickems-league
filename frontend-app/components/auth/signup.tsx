@@ -20,7 +20,7 @@ import { z } from "zod";
 import { FormError } from "../form/form-error";
 import { useState } from "react";
 
-export default function SignupComponent() {
+export default function SignupComponent({ redirectTo }: { redirectTo?: string }) {
   const form = useForm<z.infer<typeof SignupSchema>>({
     resolver: zodResolver(SignupSchema),
     defaultValues: {
@@ -41,7 +41,7 @@ export default function SignupComponent() {
   });
 
   function onSubmit(values: z.infer<typeof SignupSchema>) {
-    execute(values);
+    execute({ ...values, redirectTo });
   }
   return (
     <Form {...form}>

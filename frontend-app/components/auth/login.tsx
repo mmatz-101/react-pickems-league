@@ -20,7 +20,7 @@ import { z } from "zod";
 import { FormError } from "../form/form-error";
 import { useState } from "react";
 
-export default function LoginComponent() {
+export default function LoginComponent({ redirectTo }: { redirectTo?: string }) {
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
@@ -39,7 +39,7 @@ export default function LoginComponent() {
   });
 
   function onSubmit(values: z.infer<typeof LoginSchema>) {
-    execute(values);
+    execute({ ...values, redirectTo });
   }
   return (
     <Form {...form}>
