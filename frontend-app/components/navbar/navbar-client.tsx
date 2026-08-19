@@ -27,6 +27,9 @@ export default function NavbarClient({
   settingsLeagueSlug?: string;
 }) {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const leagueBase = settingsLeagueSlug
+    ? `/user/leagues/${settingsLeagueSlug}`
+    : "";
 
   const handleMenuToggle = () => {
     setMobileMenuOpen(!isMobileMenuOpen);
@@ -58,7 +61,7 @@ export default function NavbarClient({
       {/* Desktop Menu */}
       <nav className="hidden sm:flex items-center gap-4">
         <Link
-          href="/user/dashboard"
+          href={leagueBase ? `${leagueBase}/dashboard` : "/user/dashboard"}
           className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
           prefetch={false}
         >
@@ -66,7 +69,7 @@ export default function NavbarClient({
           User Dashboard
         </Link>
         <Link
-          href="/user/picks"
+          href={leagueBase ? `${leagueBase}/picks` : "/user/picks"}
           className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
           prefetch={false}
         >
@@ -90,7 +93,7 @@ export default function NavbarClient({
           Weekly Winner
         </Link>
         <Link
-          href="/user/results"
+          href={leagueBase ? `${leagueBase}/results` : "/user/results"}
           className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
           prefetch={false}
         >
@@ -130,7 +133,7 @@ export default function NavbarClient({
       {isMobileMenuOpen && (
         <nav className="sm:hidden absolute top-16 left-0 w-full bg-background p-4 flex flex-col gap-4">
           <Link
-            href="/user/dashboard"
+            href={leagueBase ? `${leagueBase}/dashboard` : "/user/dashboard"}
             className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
             prefetch={false}
           >
@@ -138,7 +141,7 @@ export default function NavbarClient({
             User Dashboard
           </Link>
           <Link
-            href="/user/picks"
+            href={leagueBase ? `${leagueBase}/picks` : "/user/picks"}
             className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
             prefetch={false}
           >
@@ -162,7 +165,7 @@ export default function NavbarClient({
             Weekly Winner
           </Link>
           <Link
-            href="/user/results"
+            href={leagueBase ? `${leagueBase}/results` : "/user/results"}
             className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
             prefetch={false}
           >
