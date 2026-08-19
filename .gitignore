@@ -2,6 +2,11 @@
 pb_data/
 backend-app/pb_data/
 
+# PocketBase database snapshots and WAL files
+*.db
+*.db-shm
+*.db-wal
+
 # removing venv from git
 **/venv/
 

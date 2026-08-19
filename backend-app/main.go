@@ -11,13 +11,24 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/plugins/jsvm"
+	"github.com/pocketbase/pocketbase/plugins/migratecmd"
 	"github.com/pocketbase/pocketbase/tools/cron"
+	"github.com/pocketbase/pocketbase/tools/hook"
 )
 
 var DB_URL string
 
 func main() {
 	app := pocketbase.New()
+
+	// Load JavaScript migrations from the repository's PocketBase migration directory.
+	jsvm.MustRegister(app, jsvm.Config{MigrationsDir: "pb_migrations"})
+	migratecmd.MustRegister(app, app.RootCmd, migratecmd.Config{
+		TemplateLang: migratecmd.TemplateLangJS,
+		Dir:          "pb_migrations",
+		Automigrate:  true,
+	})
 
 	// get environment variables
 	err := godotenv.Load()
@@ -26,21 +37,30 @@ func main() {
 	}
 	DB_URL = os.Getenv("DB_URL")
 
-	app.OnBeforeServe().Add(func(e *core.ServeEvent) error {
-		scheduler := cron.New()
+	registerInviteRoutes(app)
 
-		// prints "Hello!" every 1 minutes
-		scheduler.MustAdd("hello", "*/1 * * * *", func() {
-			log.Println("Hello!")
-		})
+	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
+		Func: func(e *core.ServeEvent) error {
+			if os.Getenv("DISABLE_SCHEDULER") == "true" {
+				log.Println("Scheduler disabled by DISABLE_SCHEDULER")
+				return e.Next()
+			}
 
-		// GetOddSharkData is a function that fetches data from OddShark and stores the data into the games table of the database.
-		scheduler.MustAdd("get-oddshark-data", "*/1 * * * *", GetOddSharkData)
-		scheduler.MustAdd("update-picks-results", "*/1 * * * *", UpdatePicksResults)
+			scheduler := cron.New()
 
-		scheduler.Start()
+			// prints "Hello!" every 1 minutes
+			scheduler.MustAdd("hello", "*/1 * * * *", func() {
+				log.Println("Hello!")
+			})
 
-		return nil
+			// GetOddSharkData is a function that fetches data from OddShark and stores the data into the games table of the database.
+			scheduler.MustAdd("get-oddshark-data", "*/1 * * * *", GetOddSharkData)
+			scheduler.MustAdd("update-picks-results", "*/1 * * * *", UpdatePicksResults)
+
+			scheduler.Start()
+
+			return e.Next()
+		},
 	})
 
 	if err := app.Start(); err != nil {
