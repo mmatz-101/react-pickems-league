@@ -1,12 +1,10 @@
 import { columns, mobileColumns } from "@/components/dashboard/columns";
 import { DataTable } from "@/components/dashboard/data-table";
-import { currentDataType } from "@/server/actions/admin/helpers/current-data";
 import { gameType } from "@/server/actions/picks/helpers/game-data";
 import {
   pickType,
   userTeamType,
 } from "@/server/actions/picks/helpers/pick-data";
-import { redirect } from "next/navigation";
 import {
   Accordion,
   AccordionContent,
@@ -16,37 +14,35 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Toaster } from "@/components/ui/toaster";
-import { getPB } from "@/app/pocketbase";
+import { getLeagueContext } from "@/lib/league-context";
 import Navbar from "@/components/navbar/navbar";
-import { getUsersTeam } from "@/lib/utils";
+import LeaguePageHeader from "@/components/leagues/league-page-header";
 
 interface pickTypeQuery extends pickType {
   expand: { game: gameType };
 }
 
-export default async function DashboardPage() {
-  const pb = await getPB();
-  // check if the user is valid
-  if (!pb.authStore.isValid) {
-    redirect("/login");
-  }
-  // check if the user has an id
-  if (!pb.authStore.model?.id) {
-    redirect("/login");
-  }
-  // get user team
-  const userTeam: userTeamType = await getUsersTeam(pb.authStore.model.id);
+export async function DashboardPageContent({
+  leagueSlug,
+}: {
+  leagueSlug?: string;
+}) {
+  const { pb, league, memberships, season, week, leagueTeam } = await getLeagueContext(leagueSlug);
+  const userTeam = { id: leagueTeam.id, team_name: leagueTeam.name } as userTeamType;
 
-  // everything is good
   const picks: pickTypeQuery[] = await pb.collection("picks").getFullList({
-    filter: `user_team="${userTeam.id}"`,
-    sort: "-pick_type, -game.league, +game.date",
+    filter: `league_team="${leagueTeam.id}"`,
+    sort: "-pick_type, +game.date",
     expand: "game",
   });
 
-  const currentData: currentDataType = await pb
-    .collection("current")
-    .getFirstListItem("");
+  const currentData = {
+    week: week.number,
+    max_nfl_picks: week.max_nfl_picks,
+    max_ncaaf_picks: week.max_ncaaf_picks,
+    max_nfl_binny_picks: week.max_nfl_binny_picks,
+    max_ncaaf_binny_picks: week.max_ncaaf_binny_picks,
+  };
   const weekArray = Array.from(
     { length: currentData.week },
     (_, i) => currentData.week - i,
@@ -54,9 +50,16 @@ export default async function DashboardPage() {
   // TODO: Figure out what to do with the week
   return (
     <div>
-      <Navbar />
-      <h1 className="text-xl p-4">User Dashboard</h1>
+      <Navbar leagueSlug={league?.slug} />
+      <LeaguePageHeader
+        league={{ name: league?.name ?? "League", slug: league?.slug ?? "" }}
+        leagues={memberships.map((membership) => ({
+          name: membership.expand?.league?.name ?? membership.league,
+          slug: membership.expand?.league?.slug ?? membership.league,
+        }))}
+      />
       <p className="text-lg px-4">{userTeam.team_name}</p>
+      <p className="px-4 text-muted-foreground">{season.name}</p>
       <div className="flex flex-col gap-4 p-4 sm:justify-center items-center sm:flex-row">
         {/* TODO: Potentially convert this to a component card */}
         <Card className="max-w-md w-full">
@@ -143,4 +146,8 @@ export default async function DashboardPage() {
       <Toaster />
     </div>
   );
+}
+
+export default function DashboardPage() {
+  return <DashboardPageContent />;
 }

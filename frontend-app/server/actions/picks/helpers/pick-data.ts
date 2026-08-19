@@ -9,7 +9,9 @@ export type pickType = {
   updated: string;
   created: string;
   user_team: string;
+  league_team?: string;
   week: number;
+  week_record?: string;
 };
 
 export type userTeamType = {
