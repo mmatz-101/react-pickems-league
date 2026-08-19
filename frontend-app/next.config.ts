@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withVercelToolbar = require("@vercel/toolbar/plugins/next")();
-// Instead of module.exports = nextConfig, do this:
-module.exports = withVercelToolbar(nextConfig);
+// The Vercel toolbar is a development convenience and should not be loaded
+// during production builds. Loading it unconditionally makes the build depend
+// on the toolbar's optional filesystem packages.
+if (process.env.NODE_ENV === "development") {
+  const withVercelToolbar = require("@vercel/toolbar/plugins/next")();
+  module.exports = withVercelToolbar(nextConfig);
+} else {
+  module.exports = nextConfig;
+}
