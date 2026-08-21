@@ -19,15 +19,23 @@ interface pickTypeTable extends pickType {
   expand: { game: gameType };
 }
 
+function pickDetailHref(id: string) {
+  if (typeof window !== "undefined") {
+    const match = window.location.pathname.match(/^\/user\/leagues\/([^/]+)/);
+    if (match) return `/user/leagues/${match[1]}/picks/${id}`;
+  }
+  return `/user/picks/${id}`;
+}
+
 export const mobileColumns: ColumnDef<pickTypeTable>[] = [
   {
     header: "Team Selected",
     cell: ({ row }) => {
       const pick = row.original;
       if (pick.team_selected === "HOME") {
-        return <Link className="font-medium underline" href={`/user/picks/${pick.id}`}>{pick.expand.game.home_name}</Link>;
+        return <Link className="font-medium underline" href={pickDetailHref(pick.id)}>{pick.expand.game.home_name}</Link>;
       } else {
-        return <Link className="font-medium underline" href={`/user/picks/${pick.id}`}>{pick.expand.game.away_name}</Link>;
+        return <Link className="font-medium underline" href={pickDetailHref(pick.id)}>{pick.expand.game.away_name}</Link>;
       }
     },
   },
@@ -72,7 +80,7 @@ export const columns: ColumnDef<pickTypeTable>[] = [
       const team = pick.team_selected === "HOME"
         ? pick.expand.game.home_name
         : pick.expand.game.away_name;
-      return <Link className="font-medium underline" href={`/user/picks/${pick.id}`}>{team}</Link>;
+      return <Link className="font-medium underline" href={pickDetailHref(pick.id)}>{team}</Link>;
     },
   },
   {
