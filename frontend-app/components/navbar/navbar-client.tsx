@@ -77,7 +77,7 @@ export default function NavbarClient({
           Picks
         </Link>
         <Link
-          href="/user/league/picks"
+          href={leagueBase ? `${leagueBase}/league-picks` : "/user/league/picks"}
           className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
           prefetch={false}
         >
@@ -149,7 +149,7 @@ export default function NavbarClient({
             Picks
           </Link>
           <Link
-            href="/user/league/picks"
+            href={leagueBase ? `${leagueBase}/league-picks` : "/user/league/picks"}
             className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
             prefetch={false}
           >

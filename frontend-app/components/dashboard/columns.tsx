@@ -12,6 +12,7 @@ import {
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
 import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 import { moreInformation } from "@/server/actions/picks/more-information";
 
 interface pickTypeTable extends pickType {
@@ -24,9 +25,9 @@ export const mobileColumns: ColumnDef<pickTypeTable>[] = [
     cell: ({ row }) => {
       const pick = row.original;
       if (pick.team_selected === "HOME") {
-        return pick.expand.game.home_name;
+        return <Link className="font-medium underline" href={`/user/picks/${pick.id}`}>{pick.expand.game.home_name}</Link>;
       } else {
-        return pick.expand.game.away_name;
+        return <Link className="font-medium underline" href={`/user/picks/${pick.id}`}>{pick.expand.game.away_name}</Link>;
       }
     },
   },
@@ -64,8 +65,15 @@ export const mobileColumns: ColumnDef<pickTypeTable>[] = [
 
 export const columns: ColumnDef<pickTypeTable>[] = [
   {
-    accessorKey: "team_selected",
+    id: "team_selected",
     header: "Team Selected",
+    cell: ({ row }) => {
+      const pick = row.original;
+      const team = pick.team_selected === "HOME"
+        ? pick.expand.game.home_name
+        : pick.expand.game.away_name;
+      return <Link className="font-medium underline" href={`/user/picks/${pick.id}`}>{team}</Link>;
+    },
   },
   {
     accessorKey: "pick_spread",
