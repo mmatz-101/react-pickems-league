@@ -43,6 +43,9 @@ export default function CreateInviteForm({
         execute({
           leagueId: String(form.get("leagueId")),
           maxUses: form.get("maxUses") ? Number(form.get("maxUses")) : undefined,
+          expiresAt: form.get("expiresAt")
+            ? new Date(String(form.get("expiresAt"))).toISOString()
+            : undefined,
         });
       }}
     >
@@ -55,6 +58,15 @@ export default function CreateInviteForm({
             </option>
           ))}
         </select>
+      </label>
+
+      <label className="block space-y-1">
+        <span className="font-medium">Expiration (optional)</span>
+        <input
+          className="w-full rounded border p-2"
+          name="expiresAt"
+          type="datetime-local"
+        />
       </label>
 
       <label className="block space-y-1">

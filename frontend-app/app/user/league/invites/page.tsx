@@ -1,5 +1,6 @@
 import { getPB } from "@/app/pocketbase";
 import CreateInviteForm from "@/components/leagues/create-invite-form";
+import Link from "next/link";
 
 export default async function LeagueInvitesPage() {
   const pb = await getPB();
@@ -21,6 +22,9 @@ export default async function LeagueInvitesPage() {
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
+      <Link className="text-sm underline" href="/user/dashboard">
+        ← Back to league settings
+      </Link>
       <div>
         <h1 className="text-2xl font-bold">League invites</h1>
         <p className="text-muted-foreground">
