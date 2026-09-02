@@ -2,6 +2,8 @@
 
 import { createLeagueInvite } from "@/server/actions/leagues/create-invite";
 import { Copy, Check } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 
@@ -13,6 +15,8 @@ export default function CreateInviteForm({
   const [inviteUrl, setInviteUrl] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [expirationDate, setExpirationDate] = useState<Date>();
+  const [expirationTime, setExpirationTime] = useState("23:59");
   const { execute, status } = useAction(createLeagueInvite, {
     onSuccess({ data }) {
       if (data?.error) {
@@ -43,8 +47,8 @@ export default function CreateInviteForm({
         execute({
           leagueId: String(form.get("leagueId")),
           maxUses: form.get("maxUses") ? Number(form.get("maxUses")) : undefined,
-          expiresAt: form.get("expiresAt")
-            ? new Date(String(form.get("expiresAt"))).toISOString()
+          expiresAt: expirationDate
+            ? new Date(`${expirationDate.toISOString().slice(0, 10)}T${expirationTime}:00`).toISOString()
             : undefined,
         });
       }}
@@ -62,10 +66,17 @@ export default function CreateInviteForm({
 
       <label className="block space-y-1">
         <span className="font-medium">Expiration (optional)</span>
-        <input
-          className="w-full rounded border p-2"
-          name="expiresAt"
-          type="datetime-local"
+        <Calendar
+          mode="single"
+          selected={expirationDate}
+          onSelect={setExpirationDate}
+          disabled={{ before: new Date() }}
+        />
+        <Input
+          aria-label="Expiration time"
+          onChange={(event) => setExpirationTime(event.target.value)}
+          type="time"
+          value={expirationTime}
         />
       </label>
 

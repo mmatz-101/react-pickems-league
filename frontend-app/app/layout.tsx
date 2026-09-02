@@ -4,6 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import "./globals.css";
 import React from "react";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "Pickems League",
@@ -23,6 +24,7 @@ export default function RootLayout({
         <SpeedInsights />
         <Analytics />
         {shouldInjectToolbar && <VercelToolbar />}
+        <Toaster />
       </body>
     </html>
   );

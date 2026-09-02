@@ -5,6 +5,7 @@ export const SubmitPickSchema = z.object({
   game: z.string(),
   league: z.enum(["NFL", "NCAAF"]),
   leagueTeam: z.string(),
+  leagueGame: z.string(),
   weekRecord: z.string(),
   teamSelected: z.enum(["HOME", "AWAY"]),
   pickType: z.enum(["REGULAR", "BINNY"]),

@@ -1,6 +1,7 @@
 import { getLeagueContext } from "@/lib/league-context";
 import Link from "next/link";
 import UpdateProfileForm from "@/components/leagues/update-profile-form";
+import ManageLeagueTeams from "@/components/leagues/manage-league-teams";
 
 export default async function LeagueSettingsPage({
   params,
@@ -25,8 +26,14 @@ export default async function LeagueSettingsPage({
     `membership="${membership.id}"`,
     { expand: "league_team" },
   );
-  const teamNameByMembership = new Map(
-    teamMembers.map((item) => [item.membership, item.expand?.league_team?.name ?? "—"]),
+  const teams = isCommissioner
+    ? await pb.collection("league_teams").getFullList({
+        filter: `league="${membership.league}" && status="ACTIVE"`,
+        sort: "name",
+      })
+    : [];
+  const teamByMembership = Object.fromEntries(
+    teamMembers.map((item) => [item.membership, item.league_team]),
   );
 
   return (
@@ -99,28 +106,12 @@ export default async function LeagueSettingsPage({
       {isCommissioner && (
         <section className="rounded border p-4">
           <h2 className="text-lg font-semibold">Members and shared pick groups</h2>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="py-2 pr-4">Display name</th>
-                  <th className="py-2 pr-4">Role</th>
-                  <th className="py-2 pr-4">Status</th>
-                  <th className="py-2">Pick group</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => (
-                  <tr className="border-b last:border-0" key={member.id}>
-                    <td className="py-2 pr-4">{member.display_name || "—"}</td>
-                    <td className="py-2 pr-4">{member.role}</td>
-                    <td className="py-2 pr-4">{member.status}</td>
-                    <td className="py-2">{teamNameByMembership.get(member.id) ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ManageLeagueTeams
+            league={membership.league}
+            members={members.map((member) => ({ id: member.id, display_name: member.display_name, role: member.role, status: member.status }))}
+            teams={teams.map((team) => ({ id: team.id, name: team.name }))}
+            teamByMembership={teamByMembership}
+          />
         </section>
       )}
 

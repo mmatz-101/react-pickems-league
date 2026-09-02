@@ -6,20 +6,27 @@ import { pickType } from "@/server/actions/picks/helpers/pick-data";
 import Navbar from "@/components/navbar/navbar";
 
 export async function PicksPageContent({ leagueSlug }: { leagueSlug?: string }) {
-  const { pb, week, leagueTeam } = await getLeagueContext(leagueSlug);
+  const { pb, league, week, leagueTeam } = await getLeagueContext(leagueSlug);
+  const leagueGames = await pb.collection("league_games").getFullList({
+    filter: `week="${week.id}" && league="${league.id}" && included=true`,
+  });
+  const leagueGameByGame = new Map(leagueGames.map((item) => [item.game, item.id]));
 
-  const gamesNFLData: gameTypeExpanded[] = await pb.collection("games").getFullList({
+  const gamesNFLDataAll: gameTypeExpanded[] = await pb.collection("games").getFullList({
     filter: `week_record="${week.id}" && sport="NFL" && status!="FINAL" && status!="FINAL OT"`,
     expand: "home_team,away_team",
     sort: "date",
   });
-  const gamesNCAAFData: gameTypeExpanded[] = await pb.collection("games").getFullList({
+  const gamesNCAAFDataAll: gameTypeExpanded[] = await pb.collection("games").getFullList({
     filter: `week_record="${week.id}" && sport="NCAAF" && status!="FINAL" && status!="FINAL OT"`,
     expand: "home_team,away_team",
     sort: "date",
   });
+  const gamesNFLData = gamesNFLDataAll.filter((game) => leagueGameByGame.has(game.id));
+  const gamesNCAAFData = gamesNCAAFDataAll.filter((game) => leagueGameByGame.has(game.id));
+
   const currentPicks: pickType[] = await pb.collection("picks").getFullList({
-    filter: `week_record="${week.id}" && league_team="${leagueTeam.id}"`,
+    filter: `week_record="${week.id}" && league_team="${leagueTeam.id}" && league_game != ''`
   });
 
   return (
@@ -35,7 +42,7 @@ export async function PicksPageContent({ leagueSlug }: { leagueSlug?: string }) 
           <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 place-items-center gap-4 py-4">
             {week.max_nfl_picks !== 0 && gamesNFLData.map((game) => (
               <div className="w-full sm:max-w-[500px]" key={game.id}>
-                <GameCard game={game} pick={currentPicks.find((pick) => pick.game === game.id)} leagueTeam={leagueTeam.id} weekRecord={week.id} />
+                <GameCard game={game} pick={currentPicks.find((pick) => pick.game === game.id)} leagueTeam={leagueTeam.id} leagueGame={leagueGameByGame.get(game.id) ?? ""} weekRecord={week.id} />
               </div>
             ))}
           </div>
@@ -44,7 +51,7 @@ export async function PicksPageContent({ leagueSlug }: { leagueSlug?: string }) 
           <div className="grid sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3 place-items-center gap-4 py-4">
             {gamesNCAAFData.map((game) => (
               <div className="w-full sm:max-w-[500px]" key={game.id}>
-                <GameCard game={game} pick={currentPicks.find((pick) => pick.game === game.id)} leagueTeam={leagueTeam.id} weekRecord={week.id} />
+                <GameCard game={game} pick={currentPicks.find((pick) => pick.game === game.id)} leagueTeam={leagueTeam.id} leagueGame={leagueGameByGame.get(game.id) ?? ""} weekRecord={week.id} />
               </div>
             ))}
           </div>

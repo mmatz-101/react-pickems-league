@@ -44,11 +44,13 @@ export default function GameCard({
   game,
   pick,
   leagueTeam,
+  leagueGame,
   weekRecord,
 }: {
   game: gameTypeExpanded;
   pick: pickType | undefined;
   leagueTeam: string;
+  leagueGame: string;
   weekRecord: string;
 }) {
   const [homeTeamSelected, setHomeTeamSelected] = useState(false);
@@ -248,6 +250,7 @@ export default function GameCard({
                   teamSelected: homeTeamSelected ? "HOME" : "AWAY",
                   pickType: pickTypeSelected,
                   leagueTeam,
+                  leagueGame,
                   weekRecord,
                 });
               }}

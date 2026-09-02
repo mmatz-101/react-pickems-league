@@ -15,11 +15,18 @@ export interface ReturnInfo {
 
 export const submitPick = action
   .inputSchema(SubmitPickSchema)
-  .action(async ({ parsedInput: { id, game, league, leagueTeam, weekRecord, teamSelected, pickType } }) => {
+  .action(async ({ parsedInput: { id, game, league, leagueTeam, leagueGame, weekRecord, teamSelected, pickType } }) => {
     const pb = await getPB();
+    if (!leagueGame) {
+      return { error: "This game is not included in the selected league." };
+    }
     const week = await pb.collection("weeks").getOne(weekRecord);
     const gameData: gameType = await pb.collection("games").getOne(game);
 
+    const leagueGameRecord = await pb.collection("league_games").getOne(leagueGame);
+    if (leagueGameRecord.game !== game || leagueGameRecord.week !== weekRecord || leagueGameRecord.league !== (await pb.collection("seasons").getOne(week.season)).league) {
+      return { error: "League game is not part of the selected league week." };
+    }
     if (gameData.week_record !== weekRecord) {
       return { error: "Game is not part of the selected league week." };
     }
@@ -33,7 +40,7 @@ export const submitPick = action
     const maxPicks = league === "NFL" ? week.max_nfl_picks : week.max_ncaaf_picks;
     const maxBinnyPicks = league === "NFL" ? week.max_nfl_binny_picks : week.max_ncaaf_binny_picks;
     const existingPicks: pickType[] = await pb.collection("picks").getFullList({
-      filter: `league_team="${leagueTeam}" && week_record="${weekRecord}" && game.sport="${league}" && pick_type="${pickType}"`,
+      filter: `league_team="${leagueTeam}" && week_record="${weekRecord}" && league_game="${leagueGame}" && game.sport="${league}" && pick_type="${pickType}"`,
     });
     const limit = pickType === "REGULAR" ? maxPicks : maxBinnyPicks;
     if (existingPicks.length >= limit && !id) {
@@ -50,6 +57,7 @@ export const submitPick = action
       const record = await pb.collection("picks").create({
         user_team: "",
         league_team: leagueTeam,
+        league_game: leagueGame,
         week_record: weekRecord,
         game,
         week: week.number,

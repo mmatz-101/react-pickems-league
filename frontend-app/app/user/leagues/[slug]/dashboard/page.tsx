@@ -1,4 +1,4 @@
-import { DashboardPageContent } from "@/app/user/dashboard/page";
+import DashboardPageContent from "@/components/dashboard/dashboard-page-content";
 
 export default async function LeagueDashboardPage({
   params,
