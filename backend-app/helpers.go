@@ -171,21 +171,23 @@ func gameRequestBody(game CoversGame, league string, week int, homeSpread, awayS
 		status = "FINAL"
 	}
 	return GameDataRequestBody{
-		GameID:     fmt.Sprintf("%d", game.GameID),
-		Date:       game.StartDate,
-		Stadium:    game.VenueName,
-		Status:     status,
-		HomeSpread: homeSpread,
-		AwaySpread: awaySpread,
-		HomeTeam:   GetTeamID(game.HomeTeam.DisplayName, league),
-		HomeName:   game.HomeTeam.DisplayName,
-		AwayTeam:   GetTeamID(game.AwayTeam.DisplayName, league),
-		AwayName:   game.AwayTeam.DisplayName,
-		HomeScore:  game.HomeTeamScore,
-		AwayScore:  game.AwayTeamScore,
-		League:     strings.ToUpper(league),
-		Week:       week,
-		PickWinner: GetGameWinner(status, float32(game.HomeTeamScore), homeSpread, float32(game.AwayTeamScore), awaySpread),
+		GameID:       fmt.Sprintf("%d", game.GameID),
+		Date:         game.StartDate,
+		Stadium:      game.VenueName,
+		Status:       status,
+		HomeSpread:   homeSpread,
+		AwaySpread:   awaySpread,
+		HomeTeam:     GetTeamID(game.HomeTeam.DisplayName, league),
+		HomeName:     game.HomeTeam.DisplayName,
+		AwayTeam:     GetTeamID(game.AwayTeam.DisplayName, league),
+		AwayName:     game.AwayTeam.DisplayName,
+		HomeScore:    game.HomeTeamScore,
+		AwayScore:    game.AwayTeamScore,
+		League:       strings.ToUpper(league),
+		Sport:        strings.ToUpper(league),
+		ProviderWeek: week,
+		Week:         week,
+		PickWinner:   GetGameWinner(status, float32(game.HomeTeamScore), homeSpread, float32(game.AwayTeamScore), awaySpread),
 	}
 }
 

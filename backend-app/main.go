@@ -12,8 +12,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/plugins/jsvm"
@@ -24,6 +27,9 @@ import (
 
 var DB_URL string
 var pocketbaseApp *pocketbase.PocketBase
+var schedulerHTTPClient = &http.Client{Timeout: 20 * time.Second}
+var coversSyncMu sync.Mutex
+var resultsSyncMu sync.Mutex
 
 func main() {
 	app := pocketbase.New()
@@ -55,14 +61,23 @@ func main() {
 
 			scheduler := cron.New()
 
-			// prints "Hello!" every 1 minutes
-			scheduler.MustAdd("hello", "*/1 * * * *", func() {
-				log.Println("Hello!")
-			})
-
 			// FetchCoversData imports game data and bet365 spreads from Covers.
-			scheduler.MustAdd("get-covers-data", "*/1 * * * *", FetchCoversData)
-			scheduler.MustAdd("update-picks-results", "*/1 * * * *", UpdatePicksResults)
+			scheduler.MustAdd("get-covers-data", "*/1 * * * *", func() {
+				if !coversSyncMu.TryLock() {
+					log.Println("Covers sync already running; skipping overlapping run")
+					return
+				}
+				defer coversSyncMu.Unlock()
+				FetchCoversData()
+			})
+			scheduler.MustAdd("update-picks-results", "*/1 * * * *", func() {
+				if !resultsSyncMu.TryLock() {
+					log.Println("Results sync already running; skipping overlapping run")
+					return
+				}
+				defer resultsSyncMu.Unlock()
+				UpdatePicksResults()
+			})
 
 			scheduler.Start()
 
@@ -90,13 +105,8 @@ type CoversSyncStats struct {
 // FetchCoversData discovers the current NFL and NCAAF matchup IDs from Covers,
 // then imports game metadata and the latest bet365 spread for each matchup.
 func FetchCoversData() {
-	currentData, err := GetCurrentData()
-	if err != nil {
-		log.Println("Unable to get current data.", err)
-		return
-	}
-	if !currentData.UpdateGames {
-		log.Println("Update games is disabled.")
+	if !hasActiveLeagueSeason() {
+		log.Println("No active league seasons; skipping game update.")
 		return
 	}
 
@@ -156,7 +166,9 @@ func FetchCoversData() {
 			}
 			week := coversWeek(game.Game.SeasonPhase)
 			if week == 0 {
-				week = currentData.Week
+				log.Println("Unable to determine provider week for game", game.Game.GameID)
+				stats.Errors++
+				continue
 			}
 			if existing != nil {
 				err = UpdateGameData(game.Game, league, week, existing.ID, homeSpread, awaySpread)
@@ -192,6 +204,7 @@ func FetchCoversData() {
 	}
 	logCoversStats("total", total)
 	log.Printf("Covers tables updated: games (created=%d, updated=%d), teams (logos_updated=%d)", total.Created, total.Updated, total.TeamUpdated)
+	SyncLeagueGames()
 }
 
 func logCoversStats(league string, stats CoversSyncStats) {
@@ -204,7 +217,7 @@ func CoversGameIDs(league string) ([]string, error) {
 		return nil, err
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0")
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := schedulerHTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +250,7 @@ func FetchCoversGame(gameID string) (*CoversGameResponse, error) {
 		return nil, err
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0")
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := schedulerHTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -250,6 +263,14 @@ func FetchCoversGame(gameID string) (*CoversGameResponse, error) {
 		return nil, err
 	}
 	return &game, nil
+}
+
+func hasActiveLeagueSeason() bool {
+	if pocketbaseApp == nil {
+		return false
+	}
+	seasons, err := pocketbaseApp.FindRecordsByFilter("seasons", "status = 'ACTIVE'", "", 1, 0)
+	return err == nil && len(seasons) > 0
 }
 
 func coversWeek(phase string) int {
@@ -273,54 +294,47 @@ func coversWeek(phase string) int {
 // This function is intended to be run periodically (e.g., after games conclude)
 // to ensure that user picks reflect the final game outcomes.
 func UpdatePicksResults() {
-	// get the current data from the current table in database
-	currentData, err := GetCurrentData()
+	if pocketbaseApp == nil {
+		log.Println("Results sync skipped: PocketBase app is unavailable")
+		return
+	}
+
+	seasons, err := pocketbaseApp.FindRecordsByFilter("seasons", "status = 'ACTIVE'", "", 0, 0)
 	if err != nil {
-		log.Println("Unable to get current data.", err)
-		return
-	}
-	// If the update results is disabled, return
-	if !currentData.UpdateResults {
-		log.Println("Update results is disabled.")
+		log.Println("Unable to load active seasons:", err)
 		return
 	}
 
-	// get all the picks from the picks table in the database
-	url := DB_URL + "/api/collections/picks/records/?" + fmt.Sprintf("perPage=500&expand=game&filter=week=%d", currentData.Week)
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Println("Unable to get games data.", err)
-		return
-	}
-
-	defer resp.Body.Close()
-
-	picksData := PickDataExpandResponse{}
-	if newErr := json.NewDecoder(resp.Body).Decode(&picksData); newErr != nil {
-		log.Println("Unable to parse picks response body.", newErr)
-		return
-	}
-
-	if picksData.TotalPages > 1 {
-		log.Fatal("Total picks per page is too big for this function. Need addional steps.")
-	}
-
-	// loop through PickDataResponse.Items and update the picks table in the database
-	picksUpdated := 0
-	picksErrors := 0
-	for _, pick := range picksData.Items {
-		// check if the game is FINAL
-		if pick.Expand.Game.Status == "FINAL" || pick.Expand.Game.Status == "FINAL OT" {
-			pick = UpdatePickResult(pick, *currentData)
-			// update the pick in the database
-			err = UpdatePickData(pick)
-			if err != nil {
-				picksErrors++
-				log.Println("Error updating pick:", pick.ID, err)
+	checked, updated, errorsCount := 0, 0, 0
+	for _, season := range seasons {
+		picks, findErr := pocketbaseApp.FindRecordsByFilter("picks", "week_record.season = {:season}", "", 0, 0, dbx.Params{"season": season.Id})
+		if findErr != nil {
+			log.Println("Unable to load picks for season", season.Id, findErr)
+			errorsCount++
+			continue
+		}
+		currentData := CurrentData{RegularPointValue: float32(season.GetFloat("regular_win_points")), BinnyPointValue: float32(season.GetFloat("binny_win_points"))}
+		for _, record := range picks {
+			checked++
+			game, gameErr := pocketbaseApp.FindRecordById("games", record.GetString("game"))
+			if gameErr != nil || (game.GetString("status") != "FINAL" && game.GetString("status") != "FINAL OT") {
 				continue
 			}
-			picksUpdated++
+			pick := PickDataExpand{ID: record.Id, PickSpread: float32(record.GetFloat("pick_spread")), PickType: record.GetString("pick_type"), TeamSelected: record.GetString("team_selected")}
+			pick.Expand.Game = gameDataFromRecord(game)
+			pick = UpdatePickResult(pick, currentData)
+			record.Set("result_points", pick.ResultPoints)
+			record.Set("result_text", pick.ResultText)
+			if saveErr := pocketbaseApp.Save(record); saveErr != nil {
+				errorsCount++
+				continue
+			}
+			updated++
 		}
 	}
-	log.Printf("Results update: picks_checked=%d, picks_updated=%d, errors=%d; tables updated: picks", len(picksData.Items), picksUpdated, picksErrors)
+	log.Printf("Results update: picks_checked=%d, picks_updated=%d, errors=%d", checked, updated, errorsCount)
+}
+
+func gameDataFromRecord(record *core.Record) GameData {
+	return GameData{ID: record.Id, Status: record.GetString("status"), HomeScore: record.GetInt("home_score"), AwayScore: record.GetInt("away_score"), HomeSpread: float32(record.GetFloat("home_spread")), AwaySpread: float32(record.GetFloat("away_spread"))}
 }
