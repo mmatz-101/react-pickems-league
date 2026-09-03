@@ -67,7 +67,7 @@ type GameDataRequestBody struct {
 	HomeScore  int     `json:"home_score"`
 	AwayScore  int     `json:"away_score"`
 	League     string  `json:"league"`
-	TvStation  string  `json:"tv_station"`
+	TvStation  string  `json:"tv_station,omitempty"`
 	Week       int     `json:"week"`
 	PickWinner string  `json:"pick_winner"`
 }
@@ -136,29 +136,41 @@ type PickDataExpand struct {
 	} `json:"expand"`
 }
 
-type OddsSharkResponse struct {
-	Matches []struct {
-		Matches []OddsSharkMatch `json:"matches"`
-	} `json:"matches"`
+type CoversGameResponse struct {
+	Game CoversGame       `json:"game"`
+	Odds []CoversBookOdds `json:"odds"`
 }
 
-type OddsSharkMatch struct {
-	GameID int    `json:"id"`
-	Date   int64  `json:"date"`
-	Status string `json:"status"`
-	Teams  struct {
-		Home struct {
-			Name      string  `json:"name"`
-			ShortName string  `json:"shortName"`
-			Spread    float32 `json:"odds"`
-			Score     int     `json:"score"`
-		} `json:"home"`
-		Away struct {
-			Name      string  `json:"name"`
-			ShortName string  `json:"shortName"`
-			Spread    float32 `json:"odds"`
-			Score     int     `json:"score"`
-		} `json:"away"`
-	} `json:"teams"`
-	TvStation string `json:"tvStation"`
+type CoversGame struct {
+	GameID        int        `json:"gameId"`
+	StartDate     string     `json:"startDate"`
+	Status        string     `json:"status"`
+	LeagueName    string     `json:"leagueName"`
+	SeasonPhase   string     `json:"seasonPhase"`
+	HomeTeamScore int        `json:"homeTeamScore"`
+	AwayTeamScore int        `json:"awayTeamScore"`
+	VenueName     string     `json:"venueName"`
+	HomeTeam      CoversTeam `json:"homeTeam"`
+	AwayTeam      CoversTeam `json:"awayTeam"`
+}
+
+type CoversTeam struct {
+	TeamID      int    `json:"teamId"`
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+	ShortName   string `json:"shortName"`
+	Logo        string `json:"logo"`
+	SVGLogo     string `json:"svgLogo"`
+}
+
+type CoversBookOdds struct {
+	SportsbookName string                `json:"sportsbookName"`
+	SpreadHistory  []CoversSpreadHistory `json:"spreadHistory"`
+}
+
+type CoversSpreadHistory struct {
+	Spread   float32 `json:"spread"`
+	HomeOdds int     `json:"homeOdds"`
+	AwayOdds int     `json:"awayOdds"`
+	OddsDate string  `json:"oddsDate"`
 }

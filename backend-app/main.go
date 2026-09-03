@@ -4,9 +4,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/pocketbase/pocketbase"
@@ -18,9 +23,11 @@ import (
 )
 
 var DB_URL string
+var pocketbaseApp *pocketbase.PocketBase
 
 func main() {
 	app := pocketbase.New()
+	pocketbaseApp = app
 
 	// Load JavaScript migrations from the repository's PocketBase migration directory.
 	jsvm.MustRegister(app, jsvm.Config{MigrationsDir: "pb_migrations"})
@@ -53,8 +60,8 @@ func main() {
 				log.Println("Hello!")
 			})
 
-			// GetOddSharkData is a function that fetches data from OddShark and stores the data into the games table of the database.
-			scheduler.MustAdd("get-oddshark-data", "*/1 * * * *", GetOddSharkData)
+			// FetchCoversData imports game data and bet365 spreads from Covers.
+			scheduler.MustAdd("get-covers-data", "*/1 * * * *", FetchCoversData)
 			scheduler.MustAdd("update-picks-results", "*/1 * * * *", UpdatePicksResults)
 
 			scheduler.Start()
@@ -68,74 +75,187 @@ func main() {
 	}
 }
 
-// GetOddSharkData is a function that fetches data from OddShark and stores the data into the games table of the database.
-// This function is called every 5 minutes.
-func GetOddSharkData() {
-	// get the current data from the current table in database
+type CoversSyncStats struct {
+	Received     int
+	Fetched      int
+	Created      int
+	Updated      int
+	NoSpread     int
+	Errors       int
+	TeamChecks   int
+	TeamUpdated  int
+	TeamNotFound int
+}
+
+// FetchCoversData discovers the current NFL and NCAAF matchup IDs from Covers,
+// then imports game metadata and the latest bet365 spread for each matchup.
+func FetchCoversData() {
 	currentData, err := GetCurrentData()
 	if err != nil {
 		log.Println("Unable to get current data.", err)
 		return
 	}
-	// If the update games is disabled, return
 	if !currentData.UpdateGames {
 		log.Println("Update games is disabled.")
 		return
 	}
 
-	leagues := []string{"nfl", "ncaaf"}
-	for _, league := range leagues {
-
-		url := fmt.Sprintf("https://www.oddsshark.com/api/ticker/%s?_format=json", league)
-
-		request, err := http.NewRequest("GET", url, nil)
+	var total CoversSyncStats
+	updatedLogoTeams := map[string]bool{}
+	for _, league := range []string{"nfl", "ncaaf"} {
+		stats := CoversSyncStats{}
+		ids, err := CoversGameIDs(league)
 		if err != nil {
-			log.Println("Unable to create request: ", err)
-			return
+			stats.Errors++
+			log.Println("Unable to discover Covers games:", league, err)
+			continue
 		}
-		request.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0")
+		stats.Received = len(ids)
+		for _, gameID := range ids {
+			game, err := FetchCoversGame(gameID)
+			if err != nil {
+				stats.Errors++
+				log.Println("Unable to fetch Covers game", gameID, err)
+				continue
+			}
+			stats.Fetched++
+			if !strings.EqualFold(game.Game.LeagueName, league) {
+				stats.Errors++
+				continue
+			}
 
-		client := &http.Client{}
-		response, err := client.Do(request)
-		if err != nil {
-			log.Println("Unable to fetch oddsshark data: ", err)
-			return
-		}
-		defer response.Body.Close()
-
-		var gamesData OddsSharkResponse
-		if err = json.NewDecoder(response.Body).Decode(&gamesData); err != nil {
-			log.Println("Unable to parse response body: ", err)
-		}
-
-		for _, matches := range gamesData.Matches {
-			for _, match := range matches.Matches {
-				existingGame, err := GetGameData(fmt.Sprintf("%d", match.GameID))
-				if err != nil {
-					log.Println("Error loading game by id: ", err)
-					return
+			for _, team := range []CoversTeam{game.Game.HomeTeam, game.Game.AwayTeam} {
+				logoKey := league + ":" + strconv.Itoa(team.TeamID)
+				if updatedLogoTeams[logoKey] {
+					continue
 				}
-
-				// update the game if it already exists
-				if existingGame != nil {
-					err = UpdateGameData(match, league, currentData.Week, existingGame.ID)
-					if err != nil {
-						log.Println("Error updating game:", existingGame.GameID, err)
-						return
-					}
+				updatedLogoTeams[logoKey] = true
+				stats.TeamChecks++
+				logoUpdated, teamFound := UpdateTeamLogo(team, league)
+				if logoUpdated {
+					stats.TeamUpdated++
 				}
+				if !teamFound {
+					stats.TeamNotFound++
+				}
+			}
 
-				// create the game if it does not exist
-				if existingGame == nil {
-					err = CreateGameData(match, league, currentData.Week)
-					if err != nil {
-						log.Println("Error creating game:", match.GameID, err)
-						return
+			homeSpread, awaySpread, hasSpread := LatestBet365Spread(game.Odds)
+			existing, err := GetGameData(strconv.Itoa(game.Game.GameID))
+			if err != nil {
+				stats.Errors++
+				log.Println("Error loading game by id:", err)
+				continue
+			}
+			if !hasSpread && existing == nil {
+				stats.NoSpread++
+				continue
+			}
+			if !hasSpread && existing != nil {
+				homeSpread, awaySpread = existing.HomeSpread, existing.AwaySpread
+			}
+			week := coversWeek(game.Game.SeasonPhase)
+			if week == 0 {
+				week = currentData.Week
+			}
+			if existing != nil {
+				err = UpdateGameData(game.Game, league, week, existing.ID, homeSpread, awaySpread)
+			} else {
+				err = CreateGameData(game.Game, league, week, homeSpread, awaySpread)
+				// Handle a race or stale lookup by re-reading the record and updating it.
+				if err != nil && strings.Contains(err.Error(), "validation_not_unique") {
+					existing, lookupErr := GetGameData(strconv.Itoa(game.Game.GameID))
+					if lookupErr == nil && existing != nil {
+						err = UpdateGameData(game.Game, league, week, existing.ID, homeSpread, awaySpread)
 					}
 				}
 			}
+			if err != nil {
+				stats.Errors++
+				log.Println("Error saving Covers game:", game.Game.GameID, err)
+			} else if existing != nil {
+				stats.Updated++
+			} else {
+				stats.Created++
+			}
+		}
+		logCoversStats(league, stats)
+		total.Received += stats.Received
+		total.Fetched += stats.Fetched
+		total.Created += stats.Created
+		total.Updated += stats.Updated
+		total.NoSpread += stats.NoSpread
+		total.Errors += stats.Errors
+		total.TeamChecks += stats.TeamChecks
+		total.TeamUpdated += stats.TeamUpdated
+		total.TeamNotFound += stats.TeamNotFound
+	}
+	logCoversStats("total", total)
+	log.Printf("Covers tables updated: games (created=%d, updated=%d), teams (logos_updated=%d)", total.Created, total.Updated, total.TeamUpdated)
+}
+
+func logCoversStats(league string, stats CoversSyncStats) {
+	log.Printf("Covers %s: games_received=%d, games_fetched=%d, games_created=%d, games_updated=%d, games_without_spread=%d, errors=%d, team_checks=%d, teams_updated=%d, teams_not_found=%d", strings.ToUpper(league), stats.Received, stats.Fetched, stats.Created, stats.Updated, stats.NoSpread, stats.Errors, stats.TeamChecks, stats.TeamUpdated, stats.TeamNotFound)
+}
+
+func CoversGameIDs(league string) ([]string, error) {
+	req, err := http.NewRequest(http.MethodGet, "https://www.covers.com/sports/"+league+"/matchups", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Covers returned HTTP %d", resp.StatusCode)
+	}
+	bytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	re := regexp.MustCompile(`(?i)<article[^>]+id=["']` + regexp.QuoteMeta(league) + `-(\d+)`)
+	matches := re.FindAllStringSubmatch(string(bytes), -1)
+	seen := map[string]bool{}
+	ids := make([]string, 0, len(matches))
+	for _, match := range matches {
+		if !seen[match[1]] {
+			seen[match[1]] = true
+			ids = append(ids, match[1])
 		}
 	}
+	sort.Strings(ids)
+	return ids, nil
+}
+
+func FetchCoversGame(gameID string) (*CoversGameResponse, error) {
+	endpoint := "https://www.covers.com/sport/matchupodds/linehistoryjson?gameId=" + gameID + "&location=odds&countryCode=us&oddsFormat=american&betType=spread"
+	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Covers returned HTTP %d", resp.StatusCode)
+	}
+	var game CoversGameResponse
+	if err := json.NewDecoder(resp.Body).Decode(&game); err != nil {
+		return nil, err
+	}
+	return &game, nil
+}
+
+func coversWeek(phase string) int {
+	phase = strings.TrimSpace(strings.TrimPrefix(strings.ToLower(phase), "week"))
+	week, _ := strconv.Atoi(phase)
+	return week
 }
 
 // UpdatePicksResults retrieves the current application state and, if result
@@ -166,7 +286,7 @@ func UpdatePicksResults() {
 	}
 
 	// get all the picks from the picks table in the database
-	url := fmt.Sprintf(DB_URL+"/api/collections/picks/records/?") + fmt.Sprintf("perPage=500&expand=game&filter=week=%d", currentData.Week)
+	url := DB_URL + "/api/collections/picks/records/?" + fmt.Sprintf("perPage=500&expand=game&filter=week=%d", currentData.Week)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Println("Unable to get games data.", err)
@@ -186,6 +306,8 @@ func UpdatePicksResults() {
 	}
 
 	// loop through PickDataResponse.Items and update the picks table in the database
+	picksUpdated := 0
+	picksErrors := 0
 	for _, pick := range picksData.Items {
 		// check if the game is FINAL
 		if pick.Expand.Game.Status == "FINAL" || pick.Expand.Game.Status == "FINAL OT" {
@@ -193,9 +315,12 @@ func UpdatePicksResults() {
 			// update the pick in the database
 			err = UpdatePickData(pick)
 			if err != nil {
+				picksErrors++
 				log.Println("Error updating pick:", pick.ID, err)
-				return
+				continue
 			}
+			picksUpdated++
 		}
 	}
+	log.Printf("Results update: picks_checked=%d, picks_updated=%d, errors=%d; tables updated: picks", len(picksData.Items), picksUpdated, picksErrors)
 }
