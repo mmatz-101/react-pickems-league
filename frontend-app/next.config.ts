@@ -5,9 +5,15 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "a.espncdn.com",
+        hostname: "**.espncdn.com",
         port: "",
-        pathname: "/combiner/**",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.covers.com",
+        port: "",
+        pathname: "/**",
       },
     ],
   },

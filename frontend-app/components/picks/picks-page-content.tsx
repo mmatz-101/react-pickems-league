@@ -15,7 +15,7 @@ function PickProgress({ label, used, limit }: { label: string; used: number; lim
 export default async function PicksPageContent({ leagueSlug }: { leagueSlug?: string }) {
   const { pb, league, week, leagueTeam } = await getLeagueContext(leagueSlug);
   const leagueGames = await pb.collection("league_games").getFullList({ filter: `week="${week.id}" && league="${league.id}" && included=true`, expand: "game,game.home_team,game.away_team", sort: "game.date" });
-  const availableGames = leagueGames.map((item) => item.expand?.game as gameTypeExpanded).filter((game) => game && game.status !== "FINAL" && game.status !== "FINAL OT");
+  const availableGames = leagueGames.map((item) => item.expand?.game as gameTypeExpanded).filter((game) => game && game.status !== "FINAL" && game.status !== "FINAL OT" && new Date(game.date) > new Date());
   const gamesNFLData = availableGames.filter((game) => game.sport === "NFL");
   const gamesNCAAFData = availableGames.filter((game) => game.sport === "NCAAF");
   const currentPicks: pickType[] = await pb.collection("picks").getFullList({ filter: `week_record="${week.id}" && league_team="${leagueTeam.id}" && league_game != ''` });
