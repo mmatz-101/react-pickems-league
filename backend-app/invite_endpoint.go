@@ -4,10 +4,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -53,6 +55,46 @@ type approveLeagueRequest struct {
 	Request string `json:"request"`
 }
 
+type selectSeasonRequest struct {
+	Season string `json:"season"`
+}
+type selectWeekRequest struct {
+	Week string `json:"week"`
+}
+
+type createLeagueSeasonRequest struct {
+	League      string  `json:"league"`
+	Name        string  `json:"name"`
+	Year        int     `json:"year"`
+	RegularWin  float64 `json:"regular_win_points"`
+	RegularPush float64 `json:"regular_push_points"`
+	RegularLoss float64 `json:"regular_loss_points"`
+	BinnyWin    float64 `json:"binny_win_points"`
+	BinnyPush   float64 `json:"binny_push_points"`
+	BinnyLoss   float64 `json:"binny_loss_points"`
+}
+
+type createLeagueWeekRequest struct {
+	Season    string `json:"season"`
+	Number    int    `json:"number"`
+	Name      string `json:"name"`
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
+}
+
+type updateLeagueWeekRequest struct {
+	Week               string  `json:"week"`
+	Status             *string `json:"status"`
+	AllowPicks         *bool   `json:"allow_picks"`
+	StartDate          *string `json:"start_date"`
+	EndDate            *string `json:"end_date"`
+	MaxNFLPicks        *int    `json:"max_nfl_picks"`
+	MaxNCAAFPicks      *int    `json:"max_ncaaf_picks"`
+	MaxNFLBinnyPicks   *int    `json:"max_nfl_binny_picks"`
+	MaxNCAAFBinnyPicks *int    `json:"max_ncaaf_binny_picks"`
+	IsCurrent          *bool   `json:"is_current"`
+}
+
 func registerInviteRoutes(app *pocketbase.PocketBase) {
 	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
 		Func: func(e *core.ServeEvent) error {
@@ -65,10 +107,229 @@ func registerInviteRoutes(app *pocketbase.PocketBase) {
 			e.Router.POST("/api/league-teams/move-member", moveLeagueMember).Bind(apis.RequireAuth())
 			e.Router.GET("/api/scheduler/health", schedulerHealth).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-requests/approve", approveLeagueRequestHandler).Bind(apis.RequireAuth())
+			e.Router.POST("/api/league-weeks/update", updateLeagueWeek).Bind(apis.RequireAuth())
+			e.Router.POST("/api/league-weeks/create", createLeagueWeek).Bind(apis.RequireAuth())
+			e.Router.POST("/api/league-seasons/create", createLeagueSeason).Bind(apis.RequireAuth())
+			e.Router.POST("/api/league-seasons/activate", activateLeagueSeason).Bind(apis.RequireAuth())
+			e.Router.POST("/api/league-weeks/set-current", setCurrentLeagueWeek).Bind(apis.RequireAuth())
 			return e.Next()
 		},
 		Priority: 999,
 	})
+}
+
+func activateLeagueSeason(e *core.RequestEvent) error {
+	var body selectSeasonRequest
+	if err := e.BindBody(&body); err != nil || body.Season == "" {
+		return e.BadRequestError("A season is required.", err)
+	}
+	season, err := e.App.FindRecordById("seasons", body.Season)
+	if err != nil {
+		return e.NotFoundError("Season not found.", nil)
+	}
+	if err := requireCommissioner(e.App, season.GetString("league"), e.Auth.Id); err != nil {
+		return e.ForbiddenError(err.Error(), nil)
+	}
+	seasons, _ := e.App.FindRecordsByFilter("seasons", "league = {:league}", "", 0, 0, dbx.Params{"league": season.GetString("league")})
+	for _, item := range seasons {
+		item.Set("status", "COMPLETED")
+		if item.Id == season.Id {
+			item.Set("status", "ACTIVE")
+		}
+		if err := e.App.Save(item); err != nil {
+			return e.InternalServerError("Unable to activate season.", err)
+		}
+	}
+	weeks, err := e.App.FindRecordsByFilter("weeks", "season = {:season}", "", 0, 0, dbx.Params{"season": season.Id})
+	if err != nil {
+		return e.InternalServerError("Unable to load season weeks.", err)
+	}
+	if len(weeks) == 0 {
+		collection, err := e.App.FindCollectionByNameOrId("weeks")
+		if err != nil {
+			return e.InternalServerError("Weeks collection unavailable.", err)
+		}
+		now := time.Now().UTC()
+		week := core.NewRecord(collection)
+		week.Set("season", season.Id)
+		week.Set("number", 1)
+		week.Set("name", "Week 1")
+		week.Set("status", "OPEN")
+		week.Set("start_date", now.Format(time.RFC3339Nano))
+		week.Set("end_date", now.AddDate(0, 0, 7).Format(time.RFC3339Nano))
+		week.Set("allow_picks", true)
+		week.Set("max_nfl_picks", 4)
+		week.Set("max_ncaaf_picks", 4)
+		week.Set("max_nfl_binny_picks", 1)
+		week.Set("max_ncaaf_binny_picks", 1)
+		week.Set("is_current", true)
+		if err := e.App.Save(week); err != nil {
+			return e.InternalServerError("Unable to create initial season week.", err)
+		}
+	}
+	return e.JSON(http.StatusOK, map[string]string{"message": "Season activated."})
+}
+
+func setCurrentLeagueWeek(e *core.RequestEvent) error {
+	var body selectWeekRequest
+	if err := e.BindBody(&body); err != nil || body.Week == "" {
+		return e.BadRequestError("A week is required.", err)
+	}
+	week, err := e.App.FindRecordById("weeks", body.Week)
+	if err != nil {
+		return e.NotFoundError("Week not found.", nil)
+	}
+	season, err := e.App.FindRecordById("seasons", week.GetString("season"))
+	if err != nil {
+		return e.NotFoundError("Season not found.", nil)
+	}
+	if err := requireCommissioner(e.App, season.GetString("league"), e.Auth.Id); err != nil {
+		return e.ForbiddenError(err.Error(), nil)
+	}
+	weeks, _ := e.App.FindRecordsByFilter("weeks", "season = {:season}", "", 0, 0, dbx.Params{"season": season.Id})
+	for _, item := range weeks {
+		item.Set("is_current", item.Id == week.Id)
+		if err := e.App.Save(item); err != nil {
+			return e.InternalServerError("Unable to set current week.", err)
+		}
+	}
+	return e.JSON(http.StatusOK, map[string]string{"message": "Current week updated."})
+}
+
+func createLeagueSeason(e *core.RequestEvent) error {
+	var body createLeagueSeasonRequest
+	if err := e.BindBody(&body); err != nil || body.League == "" || body.Name == "" || body.Year <= 0 {
+		return e.BadRequestError("League, season name, and year are required.", err)
+	}
+	if err := requireCommissioner(e.App, body.League, e.Auth.Id); err != nil {
+		return e.ForbiddenError(err.Error(), nil)
+	}
+	seasons, err := e.App.FindCollectionByNameOrId("seasons")
+	if err != nil {
+		return e.InternalServerError("Seasons collection unavailable.", err)
+	}
+	if _, err := e.App.FindFirstRecordByFilter(seasons, "league = {:league} && year = {:year}", dbx.Params{"league": body.League, "year": body.Year}); err == nil {
+		return e.BadRequestError("That season year already exists.", nil)
+	}
+	season := core.NewRecord(seasons)
+	season.Set("league", body.League)
+	season.Set("name", body.Name)
+	season.Set("year", body.Year)
+	season.Set("status", "SETUP")
+	season.Set("regular_win_points", body.RegularWin)
+	season.Set("regular_push_points", body.RegularPush)
+	season.Set("regular_loss_points", body.RegularLoss)
+	season.Set("binny_win_points", body.BinnyWin)
+	season.Set("binny_push_points", body.BinnyPush)
+	season.Set("binny_loss_points", body.BinnyLoss)
+	if err := e.App.Save(season); err != nil {
+		return e.InternalServerError("Unable to create season.", err)
+	}
+	return e.JSON(http.StatusOK, map[string]string{"id": season.Id, "message": "Season created."})
+}
+
+func createLeagueWeek(e *core.RequestEvent) error {
+	var body createLeagueWeekRequest
+	if err := e.BindBody(&body); err != nil || body.Season == "" || body.Number <= 0 || body.Name == "" {
+		return e.BadRequestError("Season, week number, and name are required.", err)
+	}
+	season, err := e.App.FindRecordById("seasons", body.Season)
+	if err != nil {
+		return e.NotFoundError("Season not found.", nil)
+	}
+	if err := requireCommissioner(e.App, season.GetString("league"), e.Auth.Id); err != nil {
+		return e.ForbiddenError(err.Error(), nil)
+	}
+	weeks, err := e.App.FindCollectionByNameOrId("weeks")
+	if err != nil {
+		return e.InternalServerError("Weeks collection unavailable.", err)
+	}
+	if _, err := e.App.FindFirstRecordByFilter(weeks, "season = {:season} && number = {:number}", dbx.Params{"season": body.Season, "number": body.Number}); err == nil {
+		return e.BadRequestError("That week number already exists.", nil)
+	}
+	week := core.NewRecord(weeks)
+	week.Set("season", body.Season)
+	week.Set("number", body.Number)
+	week.Set("name", body.Name)
+	week.Set("start_date", body.StartDate)
+	week.Set("end_date", body.EndDate)
+	week.Set("status", "SETUP")
+	week.Set("allow_picks", false)
+	week.Set("max_nfl_picks", 4)
+	week.Set("max_ncaaf_picks", 4)
+	week.Set("max_nfl_binny_picks", 1)
+	week.Set("max_ncaaf_binny_picks", 1)
+	week.Set("is_current", false)
+	if err := e.App.Save(week); err != nil {
+		return e.InternalServerError("Unable to create week.", err)
+	}
+	return e.JSON(http.StatusOK, map[string]string{"id": week.Id, "message": "League week created."})
+}
+
+func updateLeagueWeek(e *core.RequestEvent) error {
+	var body updateLeagueWeekRequest
+	if err := e.BindBody(&body); err != nil || body.Week == "" {
+		return e.BadRequestError("A week is required.", err)
+	}
+	weeks, err := e.App.FindCollectionByNameOrId("weeks")
+	if err != nil {
+		return e.InternalServerError("Weeks collection unavailable.", err)
+	}
+	week, err := e.App.FindRecordById(weeks, body.Week)
+	if err != nil {
+		return e.NotFoundError("Week not found.", nil)
+	}
+	season, err := e.App.FindRecordById("seasons", week.GetString("season"))
+	if err != nil {
+		return e.NotFoundError("Season not found.", nil)
+	}
+	if err := requireCommissioner(e.App, season.GetString("league"), e.Auth.Id); err != nil {
+		return e.ForbiddenError(err.Error(), nil)
+	}
+	if body.Status != nil {
+		week.Set("status", *body.Status)
+	}
+	if body.AllowPicks != nil {
+		week.Set("allow_picks", *body.AllowPicks)
+	}
+	if body.StartDate != nil {
+		week.Set("start_date", *body.StartDate)
+	}
+	if body.EndDate != nil {
+		week.Set("end_date", *body.EndDate)
+	}
+	if body.MaxNFLPicks != nil {
+		week.Set("max_nfl_picks", *body.MaxNFLPicks)
+	}
+	if body.MaxNCAAFPicks != nil {
+		week.Set("max_ncaaf_picks", *body.MaxNCAAFPicks)
+	}
+	if body.MaxNFLBinnyPicks != nil {
+		week.Set("max_nfl_binny_picks", *body.MaxNFLBinnyPicks)
+	}
+	if body.MaxNCAAFBinnyPicks != nil {
+		week.Set("max_ncaaf_binny_picks", *body.MaxNCAAFBinnyPicks)
+	}
+	if body.IsCurrent != nil && *body.IsCurrent {
+		all, _ := e.App.FindRecordsByFilter(weeks, "season = {:season}", "", 0, 0, dbx.Params{"season": season.Id})
+		for _, item := range all {
+			item.Set("is_current", item.Id == week.Id)
+			if saveErr := e.App.Save(item); saveErr != nil {
+				return e.InternalServerError("Unable to update current week.", saveErr)
+			}
+		}
+	} else if body.IsCurrent != nil {
+		week.Set("is_current", false)
+		if err := e.App.Save(week); err != nil {
+			return e.InternalServerError("Unable to update week.", err)
+		}
+	}
+	if body.IsCurrent == nil || !*body.IsCurrent {
+		if err := e.App.Save(week); err != nil {
+			return e.InternalServerError("Unable to update week.", err)
+		}
+	}
+	return e.JSON(http.StatusOK, map[string]string{"message": "League week updated."})
 }
 
 func approveLeagueRequestHandler(e *core.RequestEvent) error {
@@ -111,6 +372,48 @@ func approveLeagueRequestHandler(e *core.RequestEvent) error {
 		if err := txApp.Save(league); err != nil {
 			return err
 		}
+
+		seasons, err := txApp.FindCollectionByNameOrId("seasons")
+		if err != nil {
+			return err
+		}
+		now := time.Now().UTC()
+		season := core.NewRecord(seasons)
+		season.Set("league", league.Id)
+		season.Set("name", fmt.Sprintf("%d Season", now.Year()))
+		season.Set("year", now.Year())
+		season.Set("status", "ACTIVE")
+		season.Set("regular_win_points", 1.5)
+		season.Set("regular_push_points", 0.75)
+		season.Set("regular_loss_points", 0)
+		season.Set("binny_win_points", 1)
+		season.Set("binny_push_points", 0)
+		season.Set("binny_loss_points", -1)
+		if err := txApp.Save(season); err != nil {
+			return err
+		}
+
+		weeks, err := txApp.FindCollectionByNameOrId("weeks")
+		if err != nil {
+			return err
+		}
+		week := core.NewRecord(weeks)
+		week.Set("season", season.Id)
+		week.Set("number", 1)
+		week.Set("name", "Week 1")
+		week.Set("status", "OPEN")
+		week.Set("start_date", now.Format(time.RFC3339Nano))
+		week.Set("end_date", now.AddDate(0, 0, 7).Format(time.RFC3339Nano))
+		week.Set("allow_picks", true)
+		week.Set("max_nfl_picks", 4)
+		week.Set("max_ncaaf_picks", 4)
+		week.Set("max_nfl_binny_picks", 1)
+		week.Set("max_ncaaf_binny_picks", 1)
+		week.Set("is_current", true)
+		if err := txApp.Save(week); err != nil {
+			return err
+		}
+
 		memberships, err := txApp.FindCollectionByNameOrId("league_memberships")
 		if err != nil {
 			return err
@@ -471,6 +774,7 @@ func acceptLeagueInvite(e *core.RequestEvent) error {
 		membership.Set("user", userID)
 		membership.Set("role", "MEMBER")
 		membership.Set("status", "ACTIVE")
+		membership.Set("display_name", displayName)
 		membership.Set("joined_at", time.Now().UTC().Format(time.RFC3339Nano))
 		if err = txApp.Save(membership); err != nil {
 			return err
