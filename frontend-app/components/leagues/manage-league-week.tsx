@@ -40,7 +40,8 @@ export default function ManageLeagueWeek({ week }: { week: ManageableWeek }) {
         maxNCAAFPicks: Number(form.get("maxNCAAFPicks")),
         maxNFLBinnyPicks: Number(form.get("maxNFLBinnyPicks")),
         maxNCAAFBinnyPicks: Number(form.get("maxNCAAFBinnyPicks")),
-        isCurrent: form.get("isCurrent") === "on",
+        // The week selector above controls which week is current; this form always edits that selected week.
+        isCurrent: true,
       });
     }}>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -63,7 +64,7 @@ export default function ManageLeagueWeek({ week }: { week: ManageableWeek }) {
         <label className="block space-y-1 text-sm font-medium">NFL Binny picks<Input name="maxNFLBinnyPicks" type="number" defaultValue={week.max_nfl_binny_picks} min="0" /></label>
         <label className="block space-y-1 text-sm font-medium">NCAA Binny picks<Input name="maxNCAAFBinnyPicks" type="number" defaultValue={week.max_ncaaf_binny_picks} min="0" /></label>
       </div>
-      <label className="flex items-center gap-2 text-sm font-medium"><input className="h-4 w-4 accent-primary" name="isCurrent" type="checkbox" defaultChecked={week.is_current} /> Set as current week</label>
+      <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">You are editing the current league week. Use the Current week selector above to switch weeks.</p>
       <Button disabled={status === "executing"} type="submit">{status === "executing" ? "Saving…" : "Save week"}</Button>
       {message && <p className="text-sm text-green-600">{message}</p>}
       {error && <p className="text-sm text-destructive">{error}</p>}

@@ -247,6 +247,9 @@ func createLeagueWeek(e *core.RequestEvent) error {
 	if _, err := e.App.FindFirstRecordByFilter(weeks, "season = {:season} && number = {:number}", dbx.Params{"season": body.Season, "number": body.Number}); err == nil {
 		return e.BadRequestError("That week number already exists.", nil)
 	}
+	if _, err := e.App.FindFirstRecordByFilter(weeks, "season = {:season} && name = {:name}", dbx.Params{"season": body.Season, "name": body.Name}); err == nil {
+		return e.BadRequestError("That week name already exists.", nil)
+	}
 	week := core.NewRecord(weeks)
 	week.Set("season", body.Season)
 	week.Set("number", body.Number)
@@ -671,8 +674,8 @@ func overrideLeagueGame(e *core.RequestEvent) error {
 		return e.ForbiddenError("The week does not belong to this league.", nil)
 	}
 	game, err := e.App.FindRecordById("games", body.Game)
-	if err != nil || game.GetString("week_record") != body.Week {
-		return e.BadRequestError("The game does not belong to this league week.", nil)
+	if err != nil || game.GetString("date") < week.GetString("start_date") || game.GetString("date") >= week.GetString("end_date") {
+		return e.BadRequestError("The game does not fall within this league week.", nil)
 	}
 
 	leagueGames, err := e.App.FindCollectionByNameOrId("league_games")

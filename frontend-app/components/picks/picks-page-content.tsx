@@ -14,12 +14,10 @@ function PickProgress({ label, used, limit }: { label: string; used: number; lim
 
 export default async function PicksPageContent({ leagueSlug }: { leagueSlug?: string }) {
   const { pb, league, week, leagueTeam } = await getLeagueContext(leagueSlug);
-  const leagueGames = await pb.collection("league_games").getFullList({ filter: `week="${week.id}" && league="${league.id}" && included=true` });
-  const leagueGameByGame = new Map(leagueGames.map((item) => [item.game, item.id]));
-  const gamesNFLDataAll: gameTypeExpanded[] = await pb.collection("games").getFullList({ filter: `week_record="${week.id}" && sport="NFL" && status!="FINAL" && status!="FINAL OT"`, expand: "home_team,away_team", sort: "date" });
-  const gamesNCAAFDataAll: gameTypeExpanded[] = await pb.collection("games").getFullList({ filter: `week_record="${week.id}" && sport="NCAAF" && status!="FINAL" && status!="FINAL OT"`, expand: "home_team,away_team", sort: "date" });
-  const gamesNFLData = gamesNFLDataAll.filter((game) => leagueGameByGame.has(game.id));
-  const gamesNCAAFData = gamesNCAAFDataAll.filter((game) => leagueGameByGame.has(game.id));
+  const leagueGames = await pb.collection("league_games").getFullList({ filter: `week="${week.id}" && league="${league.id}" && included=true`, expand: "game,game.home_team,game.away_team", sort: "game.date" });
+  const availableGames = leagueGames.map((item) => item.expand?.game as gameTypeExpanded).filter((game) => game && game.status !== "FINAL" && game.status !== "FINAL OT");
+  const gamesNFLData = availableGames.filter((game) => game.sport === "NFL");
+  const gamesNCAAFData = availableGames.filter((game) => game.sport === "NCAAF");
   const currentPicks: pickType[] = await pb.collection("picks").getFullList({ filter: `week_record="${week.id}" && league_team="${leagueTeam.id}" && league_game != ''` });
   const nflGameIds = new Set(gamesNFLData.map((game) => game.id));
   const ncaafGameIds = new Set(gamesNCAAFData.map((game) => game.id));
