@@ -10,6 +10,7 @@ PocketBase stores all application data in `pb_data/`, especially `pb_data/data.d
 - Create one independent database per environment. Staging must never share or overwrite production `pb_data`.
 - Back up staging and production with a consistent SQLite backup (or PocketBase backup) before deployment. Include the SQLite WAL/SHM files when copying a stopped instance; do not copy only `data.db` from a live database.
 - To seed staging, stop the staging service, copy a sanitized backup into the staging `pb_data/` directory, then start the service. Do not place real user data in staging unless you have a privacy-approved process.
+- The earliest repository migrations are legacy data-conversion migrations and expect original Pickems collections to exist. A blank PocketBase database cannot currently bootstrap by applying the full migration history; seed staging from an already-migrated development snapshot first.
 
 ## First-time VPS setup
 
