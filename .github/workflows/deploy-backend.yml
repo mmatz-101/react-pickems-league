@@ -38,6 +38,10 @@ jobs:
           printf '%s' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+      - name: Verify SSH host configuration
+        run: |
+          test -s ~/.ssh/known_hosts
+          ssh-keygen -F "$SSH_HOST" -f ~/.ssh/known_hosts
       - name: Upload release and migrations
         run: |
           ssh "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_PATH/bin' '$DEPLOY_PATH/pb_migrations'"
