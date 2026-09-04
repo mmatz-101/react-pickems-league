@@ -13,6 +13,24 @@ export type LeagueStanding = {
   win_percentage: number;
 };
 
+export async function getLeagueWeeklyProgress(seasonId: string): Promise<{ week: string; [team: string]: string | number }[]> {
+  const pb = await getPB();
+  const [weeks, picks] = await Promise.all([
+    pb.collection("weeks").getFullList({ filter: `season="${seasonId}"`, sort: "number" }),
+    pb.collection("picks").getFullList({ filter: `week_record.season="${seasonId}"`, expand: "league_team" }),
+  ]);
+  const teams = Array.from(new Set(picks.map((pick) => pick.expand?.league_team?.name ?? pick.league_team)));
+  const totals = Object.fromEntries(teams.map((team) => [team, 0])) as Record<string, number>;
+
+  return weeks.map((week) => {
+    for (const pick of picks.filter((item) => item.week_record === week.id)) {
+      const team = pick.expand?.league_team?.name ?? pick.league_team;
+      totals[team] = (totals[team] ?? 0) + Number(pick.result_points ?? 0);
+    }
+    return { week: `W${week.number}`, ...totals };
+  });
+}
+
 export async function getLeagueStandings(seasonId: string): Promise<LeagueStanding[]> {
   const pb = await getPB();
   const picks = await pb.collection("picks").getFullList({

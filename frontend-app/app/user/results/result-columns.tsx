@@ -78,38 +78,6 @@ export const resultColumns: ColumnDef<resultColumnsType>[] = [
     },
   },
   {
-    accessorKey: "fav_count",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Favorite Count
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-  },
-  {
-    accessorKey: "und_count",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Underdog Count
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-  },
-  {
-    accessorKey: "pick_count",
-    header: "Pick Count",
-  },
-  {
     accessorKey: "win_percentage",
     header: ({ column }) => {
       return (

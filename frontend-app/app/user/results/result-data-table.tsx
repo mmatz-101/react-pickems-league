@@ -42,11 +42,11 @@ export function ResultDataTable<TData, TValue>({
   });
 
   return (
-    <div className="rounded-md border px-6">
-      <Table>
+    <div className="overflow-x-auto">
+      <Table className="min-w-[760px] text-sm">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
+            <TableRow className="bg-muted/50 hover:bg-muted/50" key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 return (
                   <TableHead key={header.id}>
@@ -66,6 +66,7 @@ export function ResultDataTable<TData, TValue>({
           {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
               <TableRow
+                className="transition-colors hover:bg-muted/30"
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
               >
