@@ -125,7 +125,7 @@ export default function NavbarClient({
         <nav className="absolute left-0 top-16 flex w-full animate-slide-down flex-col gap-1 border-b bg-background p-3 shadow-lg sm:hidden">
           <Link
             href={leagueBase ? `${leagueBase}/dashboard` : "/user/dashboard"}
-            className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
+            className="flex flex-row items-center rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             prefetch={false}
           >
             <User size={16} className="mr-1" />
@@ -133,7 +133,7 @@ export default function NavbarClient({
           </Link>
           <Link
             href={leagueBase ? `${leagueBase}/picks` : "/user/picks"}
-            className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
+            className="flex flex-row items-center rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             prefetch={false}
           >
             <MousePointer size={16} className="mr-1" />
@@ -141,7 +141,7 @@ export default function NavbarClient({
           </Link>
           <Link
             href={leagueBase ? `${leagueBase}/league-picks` : "/user/league/picks"}
-            className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
+            className="flex flex-row items-center rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             prefetch={false}
           >
             <Calendar size={16} className="mr-1" />
@@ -149,7 +149,7 @@ export default function NavbarClient({
           </Link>
           <Link
             href={leagueBase ? `${leagueBase}/results` : "/user/results"}
-            className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
+            className="flex flex-row items-center rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             prefetch={false}
           >
             <Trophy size={16} className="mr-1" />

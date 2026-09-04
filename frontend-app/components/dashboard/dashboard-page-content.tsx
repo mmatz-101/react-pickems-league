@@ -62,9 +62,9 @@ export default async function DashboardPageContent({
           <p className="text-lg font-semibold">{userTeam.team_name}</p>
           <p className="mt-1 text-sm text-muted-foreground">{season.name}</p>
         </div>
-      <div className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-4 px-3 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8">
         {/* TODO: Potentially convert this to a component card */}
-        <Card className="max-w-md w-full">
+        <Card className="w-full border-primary/10 shadow-sm transition-shadow hover:shadow-md sm:max-w-md">
           <CardHeader>Week {currentData.week} Regular Picks</CardHeader>
           <CardContent>
             {
@@ -88,7 +88,7 @@ export default async function DashboardPageContent({
             />
           </CardContent>
         </Card>
-        <Card className="max-w-md w-full">
+        <Card className="w-full border-primary/10 shadow-sm transition-shadow hover:shadow-md sm:max-w-md">
           <CardHeader>Week {currentData.week} Binny Picks</CardHeader>
           <CardContent>
             {
