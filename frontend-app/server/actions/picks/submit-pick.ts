@@ -27,9 +27,6 @@ export const submitPick = action
     if (leagueGameRecord.game !== game || leagueGameRecord.week !== weekRecord || leagueGameRecord.league !== (await pb.collection("seasons").getOne(week.season)).league) {
       return { error: "League game is not part of the selected league week." };
     }
-    if (gameData.week_record !== weekRecord) {
-      return { error: "Game is not part of the selected league week." };
-    }
     if (!week.allow_picks || week.status !== "OPEN") {
       return { error: "Week is locked.", update: Boolean(id) };
     }
@@ -40,7 +37,7 @@ export const submitPick = action
     const maxPicks = league === "NFL" ? week.max_nfl_picks : week.max_ncaaf_picks;
     const maxBinnyPicks = league === "NFL" ? week.max_nfl_binny_picks : week.max_ncaaf_binny_picks;
     const existingPicks: pickType[] = await pb.collection("picks").getFullList({
-      filter: `league_team="${leagueTeam}" && week_record="${weekRecord}" && league_game="${leagueGame}" && game.sport="${league}" && pick_type="${pickType}"`,
+      filter: `league_team="${leagueTeam}" && week_record="${weekRecord}" && game.sport="${league}" && pick_type="${pickType}"`,
     });
     const limit = pickType === "REGULAR" ? maxPicks : maxBinnyPicks;
     if (existingPicks.length >= limit && !id) {

@@ -25,6 +25,7 @@ import { pickType } from "@/server/actions/picks/helpers/pick-data";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import { PickType } from "@/schema/submit-pick";
+import { ShieldQuestion } from "lucide-react";
 
 export interface gameTypeExpanded extends gameType {
   expand: { home_team: teamType | null; away_team: teamType | null };
@@ -67,6 +68,8 @@ export default function GameCard({
   }
 
   const [awayTeamSelected, setAwayTeamSelected] = useState(false);
+  const [homeLogoFailed, setHomeLogoFailed] = useState(false);
+  const [awayLogoFailed, setAwayLogoFailed] = useState(false);
   function awayTeamClick() {
     if (!awayTeamSelected) {
       setAwayTeamSelected(true);
@@ -78,6 +81,8 @@ export default function GameCard({
   }
 
   useEffect(() => {
+    setHomeLogoFailed(false);
+    setAwayLogoFailed(false);
     if (pick) {
       if (pick.team_selected === "HOME") {
         setHomeTeamSelected(true);
@@ -146,10 +151,7 @@ export default function GameCard({
         <CardHeader>
           <CardDescription className="flex justify-between content-center">
             <span className="flex flex-col">
-              <span>{game.tv_station ? game.tv_station : "hidden"}</span>
-              <span>
-                {game.status != "FINAL" ? gameDateDisplay(game.date) : "FINAL"}
-              </span>
+              <span>{game.status != "FINAL" ? gameDateDisplay(game.date) : "FINAL"}</span>
             </span>
           </CardDescription>
         </CardHeader>
@@ -166,14 +168,9 @@ export default function GameCard({
               `}
           >
             <div className="h-50 w-50 flex items-center justify-center">
-              {awayTeamImageSrc && (
-                <Image
-                  src={awayTeamImageSrc}
-                  alt="Logo"
-                  height={50}
-                  width={50}
-                />
-              )}
+              {awayTeamImageSrc && !awayLogoFailed ? (
+                <Image src={awayTeamImageSrc} alt={`${game.away_name} logo`} height={50} width={50} onError={() => setAwayLogoFailed(true)} />
+              ) : <ShieldQuestion aria-label={`${game.away_name} logo unavailable`} className="size-8 text-muted-foreground" />} 
             </div>
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium leading-none">
@@ -195,14 +192,9 @@ export default function GameCard({
     `}
           >
             <div className="h-50 w-50 flex items-center justify-center">
-              {homeTeamImageSrc && (
-                <Image
-                  src={homeTeamImageSrc}
-                  alt="Logo"
-                  height={50}
-                  width={50}
-                />
-              )}
+              {homeTeamImageSrc && !homeLogoFailed ? (
+                <Image src={homeTeamImageSrc} alt={`${game.home_name} logo`} height={50} width={50} onError={() => setHomeLogoFailed(true)} />
+              ) : <ShieldQuestion aria-label={`${game.home_name} logo unavailable`} className="size-8 text-muted-foreground" />} 
             </div>
             <div className="flex-1 space-y-1">
               <p className="text-sm font-medium leading-none">

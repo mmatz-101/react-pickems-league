@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, CheckCircle2, Clock3, Database, XCircle } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Clock3, XCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type SchedulerJob = { job_name: string; status: "RUNNING" | "SUCCESS" | "FAILED" | "SKIPPED"; started_at: string; completed_at?: string; error_message?: string; records_received: number; records_created: number; records_updated: number; records_failed: number };

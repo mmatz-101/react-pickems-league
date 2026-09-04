@@ -10,6 +10,7 @@ PocketBase stores all application data in `pb_data/`, especially `pb_data/data.d
 - Create one independent database per environment. Staging must never share or overwrite production `pb_data`.
 - Back up staging and production with a consistent SQLite backup (or PocketBase backup) before deployment. Include the SQLite WAL/SHM files when copying a stopped instance; do not copy only `data.db` from a live database.
 - To seed staging, stop the staging service, copy a sanitized backup into the staging `pb_data/` directory, then start the service. Do not place real user data in staging unless you have a privacy-approved process.
+- The earliest repository migrations are legacy data-conversion migrations and expect original Pickems collections to exist. A blank PocketBase database cannot currently bootstrap by applying the full migration history; seed staging from an already-migrated development snapshot first.
 
 ## First-time VPS setup
 
@@ -49,14 +50,15 @@ The examples use `/opt/pickems-staging`, the `pickems` Linux user, and port `809
 |---|---|
 | `SSH_HOST` | VPS hostname or IP |
 | `SSH_USER` | SSH deployment user (must be able to run `sudo systemctl restart pickems-backend` without a password) |
-| `SSH_PRIVATE_KEY` | Private deploy key |
+| `SSH_PRIVATE_KEY_BASE64` | Base64-encoded private deploy key (one line) |
 | `SSH_KNOWN_HOSTS` | Output of `ssh-keyscan -H YOUR_VPS_HOST` reviewed before saving |
 | `DEPLOY_PATH` | `/opt/pickems-staging` for staging, `/opt/pickems` for production |
 | `SYSTEMD_SERVICE` | `pickems-backend` for staging, `pickems-backend-production` for production |
+| `HEALTH_URL` | `http://127.0.0.1:8090/api/health` for staging, `http://127.0.0.1:8091/api/health` for production |
 
 The workflow uploads only the compiled backend binary and JavaScript migrations. It intentionally never touches `pb_data/`.
 
-Create the production service as a second unit (for example `pickems-backend-production.service`) with its own deployment path, `pb_data/`, and environment file. The workflow chooses it through the production `SYSTEMD_SERVICE` secret.
+Create the production service as a second unit (see `deploy/systemd/pickems-backend-production.service`) with its own deployment path, `pb_data/`, environment file, and local port `8091`. The workflow chooses it through the production `SYSTEMD_SERVICE` and `HEALTH_URL` secrets.
 
 ## Vercel environment variables
 

@@ -21,9 +21,12 @@ jobs:
       SSH_HOST: ${{ secrets.SSH_HOST }}
       SSH_USER: ${{ secrets.SSH_USER }}
       SYSTEMD_SERVICE: ${{ secrets.SYSTEMD_SERVICE }}
+      HEALTH_URL: ${{ secrets.HEALTH_URL }}
+      SSH_PRIVATE_KEY_BASE64: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
+      SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version-file: backend-app/go.mod
           cache-dependency-path: backend-app/go.sum
@@ -35,10 +38,18 @@ jobs:
       - name: Configure SSH
         run: |
           install -m 700 -d ~/.ssh
-          printf '%s' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          test -n "$SSH_PRIVATE_KEY_BASE64" || { echo "SSH_PRIVATE_KEY_BASE64 is missing from this GitHub Environment."; exit 1; }
+          test -n "$SSH_KNOWN_HOSTS" || { echo "SSH_KNOWN_HOSTS is missing from this GitHub Environment."; exit 1; }
+          printf '%s' "$SSH_PRIVATE_KEY_BASE64" | base64 --decode > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
+          # printf preserves multiline environment secrets without shell interpretation.
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
+      - name: Verify SSH host configuration
+        run: |
+          test -s ~/.ssh/known_hosts
+          ssh-keygen -F "$SSH_HOST" -f ~/.ssh/known_hosts
       - name: Upload release and migrations
         run: |
           ssh "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_PATH/bin' '$DEPLOY_PATH/pb_migrations'"
@@ -46,4 +57,4 @@ jobs:
           scp dist/pickems-backend "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/bin/pickems-backend.new"
       - name: Apply migrations and restart service
         run: |
-          ssh "$SSH_USER@$SSH_HOST" "set -eu; install -m 755 '$DEPLOY_PATH/bin/pickems-backend.new' '$DEPLOY_PATH/bin/pickems-backend'; cd '$DEPLOY_PATH'; sudo -u pickems '$DEPLOY_PATH/bin/pickems-backend' migrate up; sudo systemctl restart '$SYSTEMD_SERVICE'; curl --fail --retry 6 --retry-delay 2 http://127.0.0.1:8090/api/health"
+          ssh "$SSH_USER@$SSH_HOST" "set -eu; install -m 755 '$DEPLOY_PATH/bin/pickems-backend.new' '$DEPLOY_PATH/bin/pickems-backend'; cd '$DEPLOY_PATH'; sudo -u pickems '$DEPLOY_PATH/bin/pickems-backend' migrate up --dir='$DEPLOY_PATH/pb_data'; sudo systemctl daemon-reload; sudo systemctl restart '$SYSTEMD_SERVICE'; for i in {1..10}; do curl --fail --silent '$HEALTH_URL' && exit 0; sleep 2; done; sudo systemctl status '$SYSTEMD_SERVICE' --no-pager || true; sudo journalctl -u '$SYSTEMD_SERVICE' -n 100 --no-pager || true; exit 1"

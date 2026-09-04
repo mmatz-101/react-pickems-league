@@ -4,11 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { activateLeagueSeason, setCurrentLeagueWeek } from "@/server/actions/leagues/select-period";
 import { useAction } from "next-safe-action/hooks";
 import { useToast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
 
 export default function SelectLeaguePeriod({ seasons, weeks, activeSeason, currentWeek }: { seasons: { id: string; name: string; year: number; status: string }[]; weeks: { id: string; name: string; number: number; is_current: boolean }[]; activeSeason: string; currentWeek: string }) {
   const { toast } = useToast();
-  const seasonAction = useAction(activateLeagueSeason, { onSuccess: ({ data }) => toast({ title: data?.error ? "Unable to activate season" : "Season activated", description: data?.error ?? data?.success, variant: data?.error ? "destructive" : "default" }) });
-  const weekAction = useAction(setCurrentLeagueWeek, { onSuccess: ({ data }) => toast({ title: data?.error ? "Unable to set week" : "Current week updated", description: data?.error ?? data?.success, variant: data?.error ? "destructive" : "default" }) });
+  const router = useRouter();
+  const seasonAction = useAction(activateLeagueSeason, { onSuccess: ({ data }) => { toast({ title: data?.error ? "Unable to activate season" : "Season activated", description: data?.error ?? data?.success, variant: data?.error ? "destructive" : "default" }); if (!data?.error) router.refresh(); } });
+  const weekAction = useAction(setCurrentLeagueWeek, { onSuccess: ({ data }) => { toast({ title: data?.error ? "Unable to set week" : "Current week updated", description: data?.error ?? data?.success, variant: data?.error ? "destructive" : "default" }); if (!data?.error) router.refresh(); } });
   return <div className="grid gap-4 sm:grid-cols-2">
     <label className="space-y-1 text-sm font-medium">Active season
       <Select value={activeSeason} onValueChange={(value) => seasonAction.execute({ id: value })}>

@@ -33,7 +33,14 @@ migrate(
       }
 
       const gameId = pick.getString("game");
-      const game = app.findRecordById(games, gameId);
+      let game;
+      try {
+        game = app.findRecordById(games, gameId);
+      } catch (_) {
+        // Historical databases can contain picks whose legacy game was removed.
+        unmatchedGames++;
+        continue;
+      }
       const weekRecordId = game.getString("week_record");
 
       if (!weekRecordId) {
