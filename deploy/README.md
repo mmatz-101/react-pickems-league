@@ -49,7 +49,7 @@ The examples use `/opt/pickems-staging`, the `pickems` Linux user, and port `809
 |---|---|
 | `SSH_HOST` | VPS hostname or IP |
 | `SSH_USER` | SSH deployment user (must be able to run `sudo systemctl restart pickems-backend` without a password) |
-| `SSH_PRIVATE_KEY` | Private deploy key |
+| `SSH_PRIVATE_KEY_BASE64` | Base64-encoded private deploy key (one line) |
 | `SSH_KNOWN_HOSTS` | Output of `ssh-keyscan -H YOUR_VPS_HOST` reviewed before saving |
 | `DEPLOY_PATH` | `/opt/pickems-staging` for staging, `/opt/pickems` for production |
 | `SYSTEMD_SERVICE` | `pickems-backend` for staging, `pickems-backend-production` for production |
