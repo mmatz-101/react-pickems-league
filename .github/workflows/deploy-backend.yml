@@ -37,7 +37,9 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+          # printf preserves multiline environment secrets without shell interpretation.
           printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
       - name: Verify SSH host configuration
         run: |
           test -s ~/.ssh/known_hosts
