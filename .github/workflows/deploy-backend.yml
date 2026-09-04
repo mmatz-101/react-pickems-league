@@ -56,4 +56,4 @@ jobs:
           scp dist/pickems-backend "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/bin/pickems-backend.new"
       - name: Apply migrations and restart service
         run: |
-          ssh "$SSH_USER@$SSH_HOST" "set -eu; install -m 755 '$DEPLOY_PATH/bin/pickems-backend.new' '$DEPLOY_PATH/bin/pickems-backend'; cd '$DEPLOY_PATH'; sudo -u pickems '$DEPLOY_PATH/bin/pickems-backend' migrate up; sudo systemctl restart '$SYSTEMD_SERVICE'; curl --fail --retry 6 --retry-delay 2 http://127.0.0.1:8090/api/health"
+          ssh "$SSH_USER@$SSH_HOST" "set -eu; install -m 755 '$DEPLOY_PATH/bin/pickems-backend.new' '$DEPLOY_PATH/bin/pickems-backend'; cd '$DEPLOY_PATH'; sudo -u pickems '$DEPLOY_PATH/bin/pickems-backend' migrate up --dir='$DEPLOY_PATH/pb_data'; sudo systemctl restart '$SYSTEMD_SERVICE'; curl --fail --retry 6 --retry-delay 2 http://127.0.0.1:8090/api/health"
