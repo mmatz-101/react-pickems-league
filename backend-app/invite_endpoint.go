@@ -46,10 +46,38 @@ func registerInviteRoutes(app *pocketbase.PocketBase) {
 			e.Router.POST("/api/league-teams/rename", renameLeagueTeam).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-teams/create", createLeagueTeam).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-teams/move-member", moveLeagueMember).Bind(apis.RequireAuth())
+			e.Router.GET("/api/scheduler/health", schedulerHealth).Bind(apis.RequireAuth())
 			return e.Next()
 		},
 		Priority: 999,
 	})
+}
+
+func schedulerHealth(e *core.RequestEvent) error {
+	if e.Auth.GetString("platform_role") != "PLATFORM_ADMIN" {
+		return e.ForbiddenError("Only platform administrators can view scheduler health.", nil)
+	}
+
+	runs, err := e.App.FindRecordsByFilter("scheduler_runs", "", "-started_at", 20, 0)
+	if err != nil {
+		return e.InternalServerError("Unable to load scheduler health.", err)
+	}
+
+	latest := map[string]map[string]any{}
+	for _, run := range runs {
+		job := run.GetString("job_name")
+		if _, exists := latest[job]; exists {
+			continue
+		}
+		latest[job] = map[string]any{
+			"job_name":      job,
+			"status":        run.GetString("status"),
+			"started_at":    run.GetString("started_at"),
+			"completed_at":  run.GetString("completed_at"),
+			"error_message": run.GetString("error_message"),
+		}
+	}
+	return e.JSON(http.StatusOK, map[string]any{"jobs": latest})
 }
 
 func updateDisplayName(e *core.RequestEvent) error {
