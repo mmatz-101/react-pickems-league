@@ -18,6 +18,10 @@ type acceptInviteRequest struct {
 	Token string `json:"token"`
 }
 
+type revokeInviteRequest struct {
+	Invite string `json:"invite"`
+}
+
 type updateDisplayNameRequest struct {
 	Membership string `json:"membership"`
 	Name       string `json:"display_name"`
@@ -46,6 +50,7 @@ func registerInviteRoutes(app *pocketbase.PocketBase) {
 	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
 		Func: func(e *core.ServeEvent) error {
 			e.Router.POST("/api/league-invites/accept", acceptLeagueInvite).Bind(apis.RequireAuth())
+			e.Router.POST("/api/league-invites/revoke", revokeLeagueInvite).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-memberships/update-display-name", updateDisplayName).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-teams/rename", renameLeagueTeam).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-teams/create", createLeagueTeam).Bind(apis.RequireAuth())
@@ -334,6 +339,33 @@ func renameLeagueTeam(e *core.RequestEvent) error {
 	return e.JSON(http.StatusOK, map[string]string{"message": "Group renamed."})
 }
 
+func revokeLeagueInvite(e *core.RequestEvent) error {
+	var body revokeInviteRequest
+	if err := e.BindBody(&body); err != nil || strings.TrimSpace(body.Invite) == "" {
+		return e.BadRequestError("An invite is required.", err)
+	}
+
+	invites, err := e.App.FindCollectionByNameOrId("league_invites")
+	if err != nil {
+		return e.InternalServerError("Invite collection is unavailable.", err)
+	}
+	invite, err := e.App.FindRecordById(invites, body.Invite)
+	if err != nil {
+		return e.NotFoundError("Invite not found.", nil)
+	}
+	if err := requireCommissioner(e.App, invite.GetString("league"), e.Auth.Id); err != nil {
+		return e.ForbiddenError(err.Error(), nil)
+	}
+	if invite.GetString("status") == "REVOKED" {
+		return e.JSON(http.StatusOK, map[string]string{"message": "Invite is already revoked."})
+	}
+	invite.Set("status", "REVOKED")
+	if err := e.App.Save(invite); err != nil {
+		return e.InternalServerError("Unable to revoke invite.", err)
+	}
+	return e.JSON(http.StatusOK, map[string]string{"message": "Invite revoked."})
+}
+
 func acceptLeagueInvite(e *core.RequestEvent) error {
 	var body acceptInviteRequest
 	if err := e.BindBody(&body); err != nil || strings.TrimSpace(body.Token) == "" {
@@ -375,6 +407,11 @@ func acceptLeagueInvite(e *core.RequestEvent) error {
 			return errors.New("user is already a member of this league")
 		}
 
+		displayName := strings.TrimSpace(e.Auth.GetString("first_name") + " " + e.Auth.GetString("last_name"))
+		if displayName == "" {
+			displayName = "Member " + userID[len(userID)-6:]
+		}
+
 		membership := core.NewRecord(memberships)
 		membership.Set("league", leagueID)
 		membership.Set("user", userID)
@@ -388,10 +425,6 @@ func acceptLeagueInvite(e *core.RequestEvent) error {
 		teams, err := txApp.FindCollectionByNameOrId("league_teams")
 		if err != nil {
 			return err
-		}
-		displayName := strings.TrimSpace(e.Auth.GetString("first_name") + " " + e.Auth.GetString("last_name"))
-		if displayName == "" {
-			displayName = "Member " + userID[len(userID)-6:]
 		}
 		team := core.NewRecord(teams)
 		team.Set("league", leagueID)

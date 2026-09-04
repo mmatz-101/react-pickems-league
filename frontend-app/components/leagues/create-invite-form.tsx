@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function CreateInviteForm({
   leagues,
@@ -18,6 +19,7 @@ export default function CreateInviteForm({
   const [copied, setCopied] = useState(false);
   const [expirationDate, setExpirationDate] = useState<Date>();
   const [expirationTime, setExpirationTime] = useState("23:59");
+  const router = useRouter();
   const { execute, status } = useAction(createLeagueInvite, {
     onSuccess({ data }) {
       if (data?.error) {
@@ -28,6 +30,7 @@ export default function CreateInviteForm({
       setError("");
       setCopied(false);
       setInviteUrl(data?.invite?.url ?? "");
+      router.refresh();
     },
     onError() {
       setError("Unable to create invite.");

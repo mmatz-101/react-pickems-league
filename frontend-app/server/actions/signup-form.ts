@@ -1,6 +1,7 @@
 "use server";
 
 import { getPB } from "@/app/pocketbase";
+import { ClientResponseError } from "pocketbase";
 import { action } from "@/lib/safe-action";
 import { redirect } from "next/navigation";
 import { SignupSchema } from "@/schema/signup-schema";
@@ -11,7 +12,8 @@ export const SignupUser = action
     try {
       // creating user data
       const userData = {
-        username: firstName + lastName,
+        // PocketBase generates a valid unique username from its collection pattern.
+        // Names may contain spaces and other normal display-name characters.
         email,
         password,
         passwordConfirm: password,
@@ -27,7 +29,12 @@ export const SignupUser = action
       await pb.collection("users").requestVerification(email);
     } catch (error) {
       console.error(error);
-      return { error: "User creation failed, try refreshing the page." };
+      if (error instanceof ClientResponseError) {
+        const fieldErrors = Object.values(error.response?.data ?? {}) as { message?: string }[];
+        const message = fieldErrors[0]?.message;
+        if (message) return { error: message };
+      }
+      return { error: "Unable to create your account. Check your details and try again." };
     }
     // redirect cannot be inside try and catch block
     const loginUrl = redirectTo

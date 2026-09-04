@@ -4,6 +4,7 @@ import { getPB } from "@/app/pocketbase";
 import { action } from "@/lib/safe-action";
 import { LeagueInviteSchema } from "@/schema/league-invite-schema";
 import { createHash, randomBytes } from "node:crypto";
+import { revalidatePath } from "next/cache";
 
 const hashToken = (token: string) =>
   createHash("sha256").update(token).digest("hex");
@@ -42,6 +43,7 @@ export const createLeagueInvite = action
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
     const inviteUrl = `${baseUrl}/join/${rawToken}`;
 
+    revalidatePath("/user/league/invites");
     return {
       success: "Invite created.",
       invite: {
