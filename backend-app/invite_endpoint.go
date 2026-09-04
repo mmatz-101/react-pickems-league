@@ -180,11 +180,15 @@ func schedulerHealth(e *core.RequestEvent) error {
 			continue
 		}
 		latest[job] = map[string]any{
-			"job_name":      job,
-			"status":        run.GetString("status"),
-			"started_at":    run.GetString("started_at"),
-			"completed_at":  run.GetString("completed_at"),
-			"error_message": run.GetString("error_message"),
+			"job_name":         job,
+			"status":           run.GetString("status"),
+			"started_at":       run.GetString("started_at"),
+			"completed_at":     run.GetString("completed_at"),
+			"error_message":    run.GetString("error_message"),
+			"records_received": run.GetInt("records_received"),
+			"records_created":  run.GetInt("records_created"),
+			"records_updated":  run.GetInt("records_updated"),
+			"records_failed":   run.GetInt("records_failed"),
 		}
 	}
 	return e.JSON(http.StatusOK, map[string]any{"jobs": latest})

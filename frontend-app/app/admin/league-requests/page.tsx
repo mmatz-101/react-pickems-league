@@ -1,11 +1,17 @@
 import { getPB } from "@/app/pocketbase";
 import ApproveRequestButton from "@/components/leagues/approve-request-button";
+import SchedulerHealth from "@/components/admin/scheduler-health";
 import { redirect } from "next/navigation";
 
 export default async function LeagueRequestsPage() {
   const pb = await getPB();
   if (!pb.authStore.isValid) redirect("/login");
   if (pb.authStore.model?.platform_role !== "PLATFORM_ADMIN") redirect("/user/dashboard");
+
+  const healthResponse: { data?: { jobs?: Record<string, never> }; error?: string } = await fetch(`${process.env.POCKETBASE_URL}/api/scheduler/health`, {
+    headers: { Authorization: `Bearer ${pb.authStore.token}` },
+    cache: "no-store",
+  }).then(async (response) => response.ok ? { data: await response.json() } : { error: "Unable to load scheduler health." }).catch(() => ({ error: "Unable to reach the scheduler health service." }));
 
   const requests = await pb.collection("league_requests").getFullList({
     filter: 'status="PENDING"',
@@ -19,6 +25,7 @@ export default async function LeagueRequestsPage() {
         <p className="text-sm text-muted-foreground">Platform administration</p>
         <h1 className="text-3xl font-bold">League requests</h1>
       </div>
+      <SchedulerHealth error={healthResponse.error} jobs={Object.values(healthResponse.data?.jobs ?? {})} />
       {requests.length === 0 ? <p>No pending requests.</p> : (
         <div className="space-y-4">
           {requests.map((request) => (
