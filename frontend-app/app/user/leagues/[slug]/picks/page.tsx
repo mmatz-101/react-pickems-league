@@ -1,4 +1,4 @@
-import { PicksPageContent } from "@/app/user/picks/page";
+import PicksPageContent from "@/components/picks/picks-page-content";
 
 export default async function LeaguePicksPage({
   params,
