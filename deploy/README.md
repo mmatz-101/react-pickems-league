@@ -26,9 +26,11 @@ The examples use `/opt/pickems-staging`, the `pickems` Linux user, and port `809
 2. Create `/etc/pickems/staging.env` (permissions `600`, owned by root):
 
    ```bash
-   DB_URL=http://127.0.0.1:8090
-   DISABLE_SCHEDULER=false
+   # Keep staging data stable and avoid polling the sports provider by default.
+   DISABLE_SCHEDULER=true
    ```
+
+   Set `DISABLE_SCHEDULER=false` only when you explicitly want staging to run the live game/odds and results scheduler.
 
 3. Install `deploy/systemd/pickems-backend.service` as `/etc/systemd/system/pickems-backend.service`. Update its deployment path and environment-file name if needed, then run:
 
