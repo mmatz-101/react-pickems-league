@@ -46,12 +46,14 @@ export default function GameCard({
   leagueTeam,
   leagueGame,
   weekRecord,
+  disabled = false,
 }: {
   game: gameTypeExpanded;
   pick: pickType | undefined;
   leagueTeam: string;
   leagueGame: string;
   weekRecord: string;
+  disabled?: boolean;
 }) {
   const [homeTeamSelected, setHomeTeamSelected] = useState(false);
   function homeTeamClick() {
@@ -140,7 +142,7 @@ export default function GameCard({
   }
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <Card className="flex-auto">
+      <Card className="flex-auto overflow-hidden border-primary/10 shadow-sm transition-shadow hover:shadow-md">
         <CardHeader>
           <CardDescription className="flex justify-between content-center">
             <span className="flex flex-col">
@@ -153,8 +155,8 @@ export default function GameCard({
         </CardHeader>
         <CardContent className="grid gap-4">
           <div
-            onClick={awayTeamClick}
-            className={`flex items-center space-x-4 rounded-md border p-4 cursor-pointer
+            onClick={disabled ? undefined : awayTeamClick}
+            className={`flex items-center space-x-4 rounded-md border p-4 transition-colors ${disabled ? "cursor-not-allowed" : "cursor-pointer"}
                 ${
                   awayTeamSelected
                     ? "bg-primary/25 hover:bg-primary/20"
@@ -182,8 +184,8 @@ export default function GameCard({
             <span>{game.away_spread === 0 ? "-" : game.away_spread}</span>
           </div>
           <div
-            onClick={homeTeamClick}
-            className={`flex items-center space-x-4 rounded-md border p-4 cursor-pointer
+            onClick={disabled ? undefined : homeTeamClick}
+            className={`flex items-center space-x-4 rounded-md border p-4 transition-colors ${disabled ? "cursor-not-allowed" : "cursor-pointer"}
       ${
         homeTeamSelected
           ? "bg-primary/25 hover:bg-primary/20"
@@ -217,6 +219,7 @@ export default function GameCard({
           <div className="flex flex-grow justify-between items-end">
             <div className="container pl-0">
               <Select
+                disabled={disabled}
                 onValueChange={(value: "REGULAR" | "BINNY") =>
                   setPickTypeSelected(value)
                 }
@@ -241,6 +244,7 @@ export default function GameCard({
               </Select>
             </div>
             <Button
+              disabled={disabled}
               size={"sm"}
               onClick={() => {
                 execute({
