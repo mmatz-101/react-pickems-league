@@ -1,0 +1,7 @@
+api-staging.pickemsleague.example {
+  reverse_proxy 127.0.0.1:8090
+}
+
+api.pickemsleague.example {
+  reverse_proxy 127.0.0.1:8090
+}

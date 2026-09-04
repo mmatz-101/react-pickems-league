@@ -1,0 +1,48 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main, staging]
+    paths:
+      - "backend-app/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy ${{ github.ref_name }} backend
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    env:
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SYSTEMD_SERVICE: ${{ secrets.SYSTEMD_SERVICE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend-app/go.mod
+          cache-dependency-path: backend-app/go.sum
+      - name: Test and build Linux backend
+        working-directory: backend-app
+        run: |
+          go test ./...
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o ../dist/pickems-backend .
+      - name: Configure SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+      - name: Upload release and migrations
+        run: |
+          ssh "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_PATH/bin' '$DEPLOY_PATH/pb_migrations'"
+          rsync -az --delete backend-app/pb_migrations/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/pb_migrations/"
+          scp dist/pickems-backend "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/bin/pickems-backend.new"
+      - name: Apply migrations and restart service
+        run: |
+          ssh "$SSH_USER@$SSH_HOST" "set -eu; install -m 755 '$DEPLOY_PATH/bin/pickems-backend.new' '$DEPLOY_PATH/bin/pickems-backend'; cd '$DEPLOY_PATH'; '$DEPLOY_PATH/bin/pickems-backend' migrate up; sudo systemctl restart '$SYSTEMD_SERVICE'; curl --fail --retry 6 --retry-delay 2 http://127.0.0.1:8090/api/health"

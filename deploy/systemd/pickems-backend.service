@@ -1,0 +1,19 @@
+[Unit]
+Description=Pickems PocketBase backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pickems
+Group=pickems
+WorkingDirectory=/opt/pickems-staging
+EnvironmentFile=/etc/pickems/staging.env
+ExecStart=/opt/pickems-staging/bin/pickems-backend serve --http=127.0.0.1:8090
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

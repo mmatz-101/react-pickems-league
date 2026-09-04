@@ -44,9 +44,9 @@ func main() {
 	})
 
 	// get environment variables
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalln("Error loading .env file")
+	if err := godotenv.Load(); err != nil {
+		// Production uses systemd environment files; a local .env is optional.
+		log.Println("No local .env file loaded; using process environment")
 	}
 	DB_URL = os.Getenv("DB_URL")
 
