@@ -8,7 +8,6 @@ export type pickType = {
   team_selected: "HOME" | "AWAY";
   updated: string;
   created: string;
-  user_team: string;
   league_team?: string;
   week: number;
   week_record?: string;

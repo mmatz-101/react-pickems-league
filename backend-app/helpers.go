@@ -32,42 +32,6 @@ func MakeRequest(req *http.Request) error {
 	return nil
 }
 
-// GetCurrentData fetches the current data from the database server
-func GetCurrentData() (*CurrentData, error) {
-	// collect the id of the currentData
-	resp, err := http.Get(DB_URL + "/api/collections/current/records")
-	if err != nil {
-		log.Println("Unable to get current table from database server error.")
-		return nil, err
-	}
-	if resp.Body != nil {
-		defer resp.Body.Close()
-	}
-
-	body, readErr := io.ReadAll(io.Reader(resp.Body))
-	if readErr != nil {
-		log.Println("Unable to read response body.", readErr)
-		return nil, readErr
-	}
-
-	data := CurrentDataResponse{}
-	jsonErr := json.Unmarshal(body, &data)
-	if jsonErr != nil {
-		log.Println("Unable to parse response body.", jsonErr)
-		return nil, jsonErr
-	}
-
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("error getting current data: %d", resp.StatusCode)
-	}
-
-	if len(data.Items) == 0 {
-		return nil, fmt.Errorf("no current data found in database")
-	}
-
-	return &data.Items[0], nil
-}
-
 // GetGameData fetches the game data from the ID of the game. Will return nil, nil if there were no errors
 // and the game was not found.
 func GetGameData(gameID string) (*GameData, error) {
@@ -327,7 +291,7 @@ func UpdatePickData(pick PickDataExpand) error {
 }
 
 // UpdatePickResult updates the pick struct based on the spread at the time of the pick
-func UpdatePickResult(pick PickDataExpand, currentData CurrentData) PickDataExpand {
+func UpdatePickResult(pick PickDataExpand, currentData ScoringConfig) PickDataExpand {
 	// Determine the points based on which team was selected and the spread.
 	switch pick.TeamSelected {
 	case "HOME":

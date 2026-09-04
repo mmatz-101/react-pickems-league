@@ -3,7 +3,6 @@ import { DataTable } from "@/components/dashboard/data-table";
 import { gameType } from "@/server/actions/picks/helpers/game-data";
 import {
   pickType,
-  userTeamType,
 } from "@/server/actions/picks/helpers/pick-data";
 import {
   Accordion,
@@ -28,7 +27,7 @@ export default async function DashboardPageContent({
   leagueSlug?: string;
 }) {
   const { pb, league, memberships, season, week, leagueTeam } = await getLeagueContext(leagueSlug);
-  const userTeam = { id: leagueTeam.id, team_name: leagueTeam.name } as userTeamType;
+  const userTeam = { id: leagueTeam.id, team_name: leagueTeam.name };
 
   const picks: pickTypeQuery[] = await pb.collection("picks").getFullList({
     filter: `league_team="${leagueTeam.id}"`,

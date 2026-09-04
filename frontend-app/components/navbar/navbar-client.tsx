@@ -10,7 +10,6 @@ import {
   Calendar,
   Trophy,
   LogOutIcon,
-  Medal,
   Settings,
 } from "lucide-react";
 import Link from "next/link";
@@ -85,14 +84,6 @@ export default function NavbarClient({
           Weekly
         </Link>
         <Link
-          href="/user/weekly-winner"
-          className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
-          prefetch={false}
-        >
-          <Medal size={16} className="mr-1" />
-          Weekly Winner
-        </Link>
-        <Link
           href={leagueBase ? `${leagueBase}/results` : "/user/results"}
           className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
           prefetch={false}
@@ -155,14 +146,6 @@ export default function NavbarClient({
           >
             <Calendar size={16} className="mr-1" />
             Weekly
-          </Link>
-          <Link
-            href="/user/weekly-winner"
-            className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
-            prefetch={false}
-          >
-            <Medal size={16} className="mr-1" />
-            Weekly Winner
           </Link>
           <Link
             href={leagueBase ? `${leagueBase}/results` : "/user/results"}

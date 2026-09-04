@@ -313,7 +313,7 @@ func UpdatePicksResults() {
 			errorsCount++
 			continue
 		}
-		currentData := CurrentData{RegularPointValue: float32(season.GetFloat("regular_win_points")), BinnyPointValue: float32(season.GetFloat("binny_win_points"))}
+		currentData := ScoringConfig{RegularPointValue: float32(season.GetFloat("regular_win_points")), BinnyPointValue: float32(season.GetFloat("binny_win_points"))}
 		for _, record := range picks {
 			checked++
 			game, gameErr := pocketbaseApp.FindRecordById("games", record.GetString("game"))

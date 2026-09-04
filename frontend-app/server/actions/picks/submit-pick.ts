@@ -55,7 +55,6 @@ export const submitPick = action
 
     try {
       const record = await pb.collection("picks").create({
-        user_team: "",
         league_team: leagueTeam,
         league_game: leagueGame,
         week_record: weekRecord,

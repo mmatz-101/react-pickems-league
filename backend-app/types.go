@@ -1,28 +1,8 @@
 package main
 
-type CurrentDataResponse struct {
-	Page       int           `json:"page"`
-	PerPage    int           `json:"perPage"`
-	TotalItems int           `json:"totalItems"`
-	TotalPages int           `json:"totalPages"`
-	Items      []CurrentData `json:"items"`
-}
-
-type CurrentData struct {
-	ID                 string  `json:"id"`
-	Week               int     `json:"week"`
-	Year               int     `json:"year"`
-	AllowPicks         bool    `json:"allow_picks"`
-	MaxNFLPicks        int     `json:"max_nfl_picks"`
-	MaxNCAAFPicks      int     `json:"max_ncaaf_picks"`
-	MaxNFLBinnyPicks   int     `json:"max_nfl_binny_picks"`
-	MaxNCAAFBinnyPicks int     `json:"max_ncaaf_binny_picks"`
-	RegularPointValue  float32 `json:"regular_point_value"`
-	BinnyPointValue    float32 `json:"binny_point_value"`
-	UpdateGames        bool    `json:"update_games"`
-	UpdateResults      bool    `json:"update_results"`
-	NFLWeekSearch      string  `json:"nfl_week_search"`
-	NCAAFWeekSearch    string  `json:"ncaaf_week_search"`
+type ScoringConfig struct {
+	RegularPointValue float32
+	BinnyPointValue   float32
 }
 
 type GamesDataResponse struct {
