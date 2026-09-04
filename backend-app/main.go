@@ -205,6 +205,7 @@ func FetchCoversData() {
 		total.TeamNotFound += stats.TeamNotFound
 	}
 	logCoversStats("total", total)
+	setSchedulerCounts("get-covers-data", SchedulerCounts{Received: total.Received, Created: total.Created, Updated: total.Updated, Failed: total.Errors})
 	log.Printf("Covers tables updated: games (created=%d, updated=%d), teams (logos_updated=%d)", total.Created, total.Updated, total.TeamUpdated)
 	SyncLeagueGames()
 }
@@ -334,6 +335,7 @@ func UpdatePicksResults() {
 			updated++
 		}
 	}
+	setSchedulerCounts("update-picks-results", SchedulerCounts{Received: checked, Updated: updated, Failed: errorsCount})
 	log.Printf("Results update: picks_checked=%d, picks_updated=%d, errors=%d", checked, updated, errorsCount)
 }
 
