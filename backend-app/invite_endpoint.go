@@ -38,6 +38,10 @@ type moveLeagueMemberRequest struct {
 	LeagueTeam string `json:"league_team"`
 }
 
+type approveLeagueRequest struct {
+	Request string `json:"request"`
+}
+
 func registerInviteRoutes(app *pocketbase.PocketBase) {
 	app.OnServe().Bind(&hook.Handler[*core.ServeEvent]{
 		Func: func(e *core.ServeEvent) error {
@@ -47,10 +51,103 @@ func registerInviteRoutes(app *pocketbase.PocketBase) {
 			e.Router.POST("/api/league-teams/create", createLeagueTeam).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-teams/move-member", moveLeagueMember).Bind(apis.RequireAuth())
 			e.Router.GET("/api/scheduler/health", schedulerHealth).Bind(apis.RequireAuth())
+			e.Router.POST("/api/league-requests/approve", approveLeagueRequestHandler).Bind(apis.RequireAuth())
 			return e.Next()
 		},
 		Priority: 999,
 	})
+}
+
+func approveLeagueRequestHandler(e *core.RequestEvent) error {
+	if e.Auth.GetString("platform_role") != "PLATFORM_ADMIN" {
+		return e.ForbiddenError("Only platform administrators can approve league requests.", nil)
+	}
+	var body approveLeagueRequest
+	if err := e.BindBody(&body); err != nil || body.Request == "" {
+		return e.BadRequestError("A league request is required.", err)
+	}
+
+	result := map[string]string{}
+	err := e.App.RunInTransaction(func(txApp core.App) error {
+		requests, err := txApp.FindCollectionByNameOrId("league_requests")
+		if err != nil {
+			return err
+		}
+		request, err := txApp.FindRecordById(requests, body.Request)
+		if err != nil {
+			return e.NotFoundError("League request not found.", nil)
+		}
+		if request.GetString("status") != "PENDING" {
+			return errors.New("league request is not pending")
+		}
+		name := strings.TrimSpace(request.GetString("requested_name"))
+		slug := strings.ToLower(strings.ReplaceAll(name, " ", "-"))
+		leagues, err := txApp.FindCollectionByNameOrId("leagues")
+		if err != nil {
+			return err
+		}
+		league := core.NewRecord(leagues)
+		league.Set("name", name)
+		league.Set("slug", slug)
+		league.Set("description", request.GetString("description"))
+		league.Set("status", "ACTIVE")
+		league.Set("created_by", request.GetString("requester"))
+		league.Set("approved_by", e.Auth.Id)
+		league.Set("approved_at", time.Now().UTC().Format(time.RFC3339Nano))
+		league.Set("timezone", "America/Chicago")
+		if err := txApp.Save(league); err != nil {
+			return err
+		}
+		memberships, err := txApp.FindCollectionByNameOrId("league_memberships")
+		if err != nil {
+			return err
+		}
+		membership := core.NewRecord(memberships)
+		membership.Set("league", league.Id)
+		membership.Set("user", request.GetString("requester"))
+		membership.Set("role", "COMMISSIONER")
+		membership.Set("status", "ACTIVE")
+		membership.Set("display_name", "")
+		membership.Set("team_name", "")
+		membership.Set("joined_at", time.Now().UTC().Format(time.RFC3339Nano))
+		if err := txApp.Save(membership); err != nil {
+			return err
+		}
+		teams, err := txApp.FindCollectionByNameOrId("league_teams")
+		if err != nil {
+			return err
+		}
+		team := core.NewRecord(teams)
+		team.Set("league", league.Id)
+		team.Set("name", name)
+		team.Set("status", "ACTIVE")
+		if err := txApp.Save(team); err != nil {
+			return err
+		}
+		teamMembers, err := txApp.FindCollectionByNameOrId("league_team_members")
+		if err != nil {
+			return err
+		}
+		teamMember := core.NewRecord(teamMembers)
+		teamMember.Set("league_team", team.Id)
+		teamMember.Set("membership", membership.Id)
+		if err := txApp.Save(teamMember); err != nil {
+			return err
+		}
+		request.Set("status", "APPROVED")
+		request.Set("reviewed_by", e.Auth.Id)
+		request.Set("reviewed_at", time.Now().UTC().Format(time.RFC3339Nano))
+		if err := txApp.Save(request); err != nil {
+			return err
+		}
+		result["league"] = league.Id
+		return nil
+	})
+	if err != nil {
+		return e.BadRequestError(err.Error(), nil)
+	}
+	result["message"] = "League request approved."
+	return e.JSON(http.StatusOK, result)
 }
 
 func schedulerHealth(e *core.RequestEvent) error {
