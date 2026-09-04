@@ -1,0 +1,19 @@
+[Unit]
+Description=Pickems PocketBase production backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pickems
+Group=pickems
+WorkingDirectory=/opt/pickems
+EnvironmentFile=/etc/pickems/production.env
+ExecStart=/opt/pickems/bin/pickems-backend serve --http=127.0.0.1:8091 --dir=/opt/pickems/pb_data
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
