@@ -57,9 +57,12 @@ export default async function DashboardPageContent({
           slug: membership.expand?.league?.slug ?? membership.league,
         }))}
       />
-      <p className="text-lg px-4">{userTeam.team_name}</p>
-      <p className="px-4 text-muted-foreground">{season.name}</p>
-      <div className="flex flex-col gap-4 p-4 sm:justify-center items-center sm:flex-row">
+      <main className="mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="animate-fade-up border-b py-5">
+          <p className="text-lg font-semibold">{userTeam.team_name}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{season.name}</p>
+        </div>
+      <div className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center">
         {/* TODO: Potentially convert this to a component card */}
         <Card className="max-w-md w-full">
           <CardHeader>Week {currentData.week} Regular Picks</CardHeader>
@@ -111,7 +114,7 @@ export default async function DashboardPageContent({
         </Card>
       </div>
       {weekArray.map((week) => (
-        <div className="" key={week}>
+        <div className="animate-fade-up" key={week}>
           <Accordion
             className=""
             type="single"
@@ -119,18 +122,18 @@ export default async function DashboardPageContent({
             defaultValue="item-0"
           >
             <AccordionItem
-              className="px-4 py-2"
+              className="rounded-lg border px-4 py-2 transition-colors hover:bg-muted/20"
               value={week === currentData.week ? "item-0" : "item-1"}
             >
               <AccordionTrigger>Week {week}</AccordionTrigger>
               <AccordionContent>
-                <div className="container px-2 py-10 sm:block md:hidden">
+                <div className="mx-auto max-w-xl px-0 py-6 sm:block md:hidden">
                   <DataTable
                     columns={mobileColumns}
                     data={picks.filter((pick) => pick.week === week)}
                   />
                 </div>
-                <div className="container mx-auto py-10 hidden md:block">
+                <div className="mx-auto hidden max-w-6xl py-6 md:block">
                   <DataTable
                     columns={columns}
                     data={picks.filter((pick) => pick.week === week)}
@@ -141,6 +144,7 @@ export default async function DashboardPageContent({
           </Accordion>
         </div>
       ))}
+      </main>
 
       <Toaster />
     </div>

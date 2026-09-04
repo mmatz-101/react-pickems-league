@@ -35,8 +35,8 @@ export default function NavbarClient({
   };
 
   return (
-    <header className="flex h-16 items-center justify-between bg-background px-4 sm:px-6 relative">
-      <Link href="/" className="flex items-center gap-2" prefetch={false}>
+    <header className="relative z-20 flex h-16 items-center justify-between border-b bg-background/90 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/75 sm:px-6">
+      <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-75" prefetch={false}>
         <Image
           src="/binny_logo2.svg"
           width={32}
@@ -45,12 +45,12 @@ export default function NavbarClient({
           className="h-8 w-8"
           style={{ aspectRatio: "32/32", objectFit: "cover" }}
         />
-        <span className="text-lg font-medium">PICKEMS</span>
+        <span className="text-lg font-bold tracking-tight">PICKEMS</span>
       </Link>
 
       {/* Hamburger Button */}
       <button
-        className="block sm:hidden p-2"
+        className="rounded-md p-2 transition-colors hover:bg-muted sm:hidden"
         onClick={handleMenuToggle}
         aria-label="Toggle menu"
       >
@@ -58,7 +58,7 @@ export default function NavbarClient({
       </button>
 
       {/* Desktop Menu */}
-      <nav className="hidden sm:flex items-center gap-4">
+      <nav className="hidden items-center gap-1 sm:flex">
         <Link
           href={leagueBase ? `${leagueBase}/dashboard` : "/user/dashboard"}
           className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
@@ -122,7 +122,7 @@ export default function NavbarClient({
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <nav className="sm:hidden absolute top-16 left-0 w-full bg-background p-4 flex flex-col gap-4">
+        <nav className="absolute left-0 top-16 flex w-full animate-slide-down flex-col gap-1 border-b bg-background p-3 shadow-lg sm:hidden">
           <Link
             href={leagueBase ? `${leagueBase}/dashboard` : "/user/dashboard"}
             className="text-sm font-medium text-muted-foreground hover:text-foreground flex flex-row"
@@ -155,22 +155,24 @@ export default function NavbarClient({
             <Trophy size={16} className="mr-1" />
             Results
           </Link>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <LogOutIcon
-                  size={16}
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground hover:cursor-pointer"
-                  onClick={async () => {
-                    await LogoutUser();
-                  }}
-                />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Logout</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {settingsLeagueSlug && (
+            <Link
+              href={`/user/leagues/${settingsLeagueSlug}/settings`}
+              className="flex flex-row items-center rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              prefetch={false}
+            >
+              <Settings size={16} className="mr-1" />
+              Settings
+            </Link>
+          )}
+          <button
+            className="flex flex-row items-center rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            onClick={async () => { await LogoutUser(); }}
+            type="button"
+          >
+            <LogOutIcon size={16} className="mr-1" />
+            Logout
+          </button>
         </nav>
       )}
     </header>

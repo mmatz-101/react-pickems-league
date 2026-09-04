@@ -71,6 +71,34 @@
       @apply border-border;
     }
     body {
-      @apply bg-background text-foreground;
+      @apply min-h-screen bg-background text-foreground antialiased;
+      background-image: radial-gradient(circle at top, hsl(var(--primary) / 0.055), transparent 28rem);
+    }
+
+    button,
+    a,
+    input,
+    select,
+    textarea {
+      -webkit-tap-highlight-color: transparent;
+    }
+  }
+
+  @layer utilities {
+    .settings-card {
+      @apply rounded-xl border bg-card shadow-sm transition-all duration-200 hover:shadow-md;
+    }
+
+    .settings-label {
+      @apply text-xs font-medium uppercase tracking-wider text-muted-foreground;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
     }
   }

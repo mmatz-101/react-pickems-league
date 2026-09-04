@@ -3,6 +3,7 @@
 import { createLeagueInvite } from "@/server/actions/leagues/create-invite";
 import { Copy, Check } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
@@ -40,7 +41,7 @@ export default function CreateInviteForm({
 
   return (
     <form
-      className="space-y-4 rounded border p-4"
+      className="space-y-5"
       onSubmit={(event) => {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
@@ -54,8 +55,8 @@ export default function CreateInviteForm({
       }}
     >
       <label className="block space-y-1">
-        <span className="font-medium">League</span>
-        <select className="w-full rounded border p-2" name="leagueId" required>
+        <span className="text-sm font-medium">League</span>
+        <select className="h-10 w-full rounded-md border bg-background px-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-ring" name="leagueId" required>
           {leagues.map((league) => (
             <option key={league.id} value={league.id}>
               {league.name}
@@ -65,7 +66,7 @@ export default function CreateInviteForm({
       </label>
 
       <label className="block space-y-1">
-        <span className="font-medium">Expiration (optional)</span>
+        <span className="text-sm font-medium">Expiration <span className="font-normal text-muted-foreground">(optional)</span></span>
         <Calendar
           mode="single"
           selected={expirationDate}
@@ -81,9 +82,8 @@ export default function CreateInviteForm({
       </label>
 
       <label className="block space-y-1">
-        <span className="font-medium">Maximum uses (optional)</span>
-        <input
-          className="w-full rounded border p-2"
+        <span className="text-sm font-medium">Maximum uses <span className="font-normal text-muted-foreground">(optional)</span></span>
+        <Input
           min="1"
           name="maxUses"
           placeholder="Unlimited"
@@ -91,31 +91,25 @@ export default function CreateInviteForm({
         />
       </label>
 
-      <button
-        className="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
-        disabled={status === "executing"}
-        type="submit"
-      >
+      <Button disabled={status === "executing"} type="submit">
         {status === "executing" ? "Creating…" : "Create invite"}
-      </button>
+      </Button>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
       {inviteUrl && (
         <div className="space-y-2">
           <p className="text-sm font-medium">Copy this invite URL:</p>
           <div className="flex gap-2">
-            <input className="min-w-0 flex-1 rounded border p-2" readOnly value={inviteUrl} />
-            <button
+            <Input className="min-w-0 flex-1" readOnly value={inviteUrl} />
+            <Button
               aria-label={copied ? "Invite URL copied" : "Copy invite URL"}
-              className="rounded border p-2 hover:bg-muted"
-              onClick={async () => {
-                await navigator.clipboard.writeText(inviteUrl);
-                setCopied(true);
-              }}
+              onClick={async () => { await navigator.clipboard.writeText(inviteUrl); setCopied(true); }}
+              size="icon"
               type="button"
+              variant="outline"
             >
               {copied ? <Check size={18} /> : <Copy size={18} />}
-            </button>
+            </Button>
           </div>
           {copied && <p className="text-sm text-green-600">Copied.</p>}
         </div>
