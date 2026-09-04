@@ -22,6 +22,13 @@ type revokeInviteRequest struct {
 	Invite string `json:"invite"`
 }
 
+type overrideLeagueGameRequest struct {
+	League   string `json:"league"`
+	Week     string `json:"week"`
+	Game     string `json:"game"`
+	Included bool   `json:"included"`
+}
+
 type updateDisplayNameRequest struct {
 	Membership string `json:"membership"`
 	Name       string `json:"display_name"`
@@ -51,6 +58,7 @@ func registerInviteRoutes(app *pocketbase.PocketBase) {
 		Func: func(e *core.ServeEvent) error {
 			e.Router.POST("/api/league-invites/accept", acceptLeagueInvite).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-invites/revoke", revokeLeagueInvite).Bind(apis.RequireAuth())
+			e.Router.POST("/api/league-games/override", overrideLeagueGame).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-memberships/update-display-name", updateDisplayName).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-teams/rename", renameLeagueTeam).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-teams/create", createLeagueTeam).Bind(apis.RequireAuth())
@@ -337,6 +345,48 @@ func renameLeagueTeam(e *core.RequestEvent) error {
 		return e.InternalServerError("Unable to rename group.", err)
 	}
 	return e.JSON(http.StatusOK, map[string]string{"message": "Group renamed."})
+}
+
+func overrideLeagueGame(e *core.RequestEvent) error {
+	var body overrideLeagueGameRequest
+	if err := e.BindBody(&body); err != nil || body.League == "" || body.Week == "" || body.Game == "" {
+		return e.BadRequestError("League, week, and game are required.", err)
+	}
+	if err := requireCommissioner(e.App, body.League, e.Auth.Id); err != nil {
+		return e.ForbiddenError(err.Error(), nil)
+	}
+	week, err := e.App.FindRecordById("weeks", body.Week)
+	if err != nil || week.GetString("season") == "" {
+		return e.NotFoundError("Week not found.", nil)
+	}
+	season, err := e.App.FindRecordById("seasons", week.GetString("season"))
+	if err != nil || season.GetString("league") != body.League {
+		return e.ForbiddenError("The week does not belong to this league.", nil)
+	}
+	game, err := e.App.FindRecordById("games", body.Game)
+	if err != nil || game.GetString("week_record") != body.Week {
+		return e.BadRequestError("The game does not belong to this league week.", nil)
+	}
+
+	leagueGames, err := e.App.FindCollectionByNameOrId("league_games")
+	if err != nil {
+		return e.InternalServerError("League games collection is unavailable.", err)
+	}
+	leagueGame, findErr := e.App.FindFirstRecordByFilter(leagueGames, "league = {:league} && game = {:game}", map[string]any{"league": body.League, "game": body.Game})
+	if findErr != nil {
+		leagueGame = core.NewRecord(leagueGames)
+		leagueGame.Set("league", body.League)
+		leagueGame.Set("week", body.Week)
+		leagueGame.Set("game", body.Game)
+	}
+	leagueGame.Set("included", body.Included)
+	leagueGame.Set("manual_override", true)
+	if err := e.App.Save(leagueGame); err != nil {
+		return e.InternalServerError("Unable to save game override.", err)
+	}
+	message := "Game included for this league."
+	if !body.Included { message = "Game excluded from this league." }
+	return e.JSON(http.StatusOK, map[string]string{"message": message})
 }
 
 func revokeLeagueInvite(e *core.RequestEvent) error {

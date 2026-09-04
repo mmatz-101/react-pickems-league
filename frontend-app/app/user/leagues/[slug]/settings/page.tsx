@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import UpdateProfileForm from "@/components/leagues/update-profile-form";
 import ManageLeagueTeams from "@/components/leagues/manage-league-teams";
+import ManageLeagueGames from "@/components/leagues/manage-league-games";
 import ManageLeagueWeek from "@/components/leagues/manage-league-week";
 import CreateLeagueWeek from "@/components/leagues/create-league-week";
 import CreateLeagueSeason from "@/components/leagues/create-league-season";
@@ -70,6 +71,8 @@ export default async function LeagueSettingsPage({
   const teamMembers = isCommissioner ? await pb.collection("league_team_members").getFullList({ expand: "league_team" }) : [];
   const currentTeamMember = await pb.collection("league_team_members").getFirstListItem(`membership="${membership.id}"`, { expand: "league_team" });
   const teams = isCommissioner ? await pb.collection("league_teams").getFullList({ filter: `league="${membership.league}" && status="ACTIVE"`, sort: "name" }) : [];
+  const weekGames = isCommissioner ? await pb.collection("games").getFullList({ filter: `week_record="${week.id}"`, sort: "date" }) : [];
+  const leagueGames = isCommissioner ? await pb.collection("league_games").getFullList({ filter: `league="${membership.league}" && week="${week.id}"` }) : [];
   const teamByMembership = Object.fromEntries(teamMembers.map((item) => [item.membership, item.league_team]));
 
   return (
@@ -120,6 +123,9 @@ export default async function LeagueSettingsPage({
           <SettingCard description="Update dates, pick limits, scoring window, and availability." icon={ShieldCheck} title="Current week settings">
             <ManageLeagueWeek week={manageableWeek} />
             <div className="mt-8 border-t pt-7"><h3 className="font-semibold">Create another week</h3><p className="mt-1 text-sm text-muted-foreground">Add the next week to {season.name}.</p><CreateLeagueWeek season={season.id} nextNumber={seasonWeeks.length + 1} /></div>
+          </SettingCard>
+          <SettingCard description="Choose which provider games are available for members to pick this week." icon={ShieldCheck} title="League game availability">
+            <ManageLeagueGames league={membership.league} week={week.id} games={weekGames.map((game) => ({ id: game.id, away_name: game.away_name, home_name: game.home_name, sport: game.sport ?? game.league, date: game.date, status: game.status }))} includedGameIds={leagueGames.filter((game) => game.included).map((game) => game.game)} />
           </SettingCard>
           <SettingCard description="Create shared pick groups and assign league members to them." icon={UsersRound} title="Members and shared pick groups">
             <ManageLeagueTeams league={membership.league} members={members.map((member) => ({ id: member.id, display_name: member.display_name, role: member.role, status: member.status }))} teams={teams.map((team) => ({ id: team.id, name: team.name }))} teamByMembership={teamByMembership} />
