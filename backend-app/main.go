@@ -65,18 +65,20 @@ func main() {
 			scheduler.MustAdd("get-covers-data", "*/1 * * * *", func() {
 				if !coversSyncMu.TryLock() {
 					log.Println("Covers sync already running; skipping overlapping run")
+					recordSkippedSchedulerRun("get-covers-data", "overlapping run")
 					return
 				}
 				defer coversSyncMu.Unlock()
-				FetchCoversData()
+				runTrackedJob("get-covers-data", FetchCoversData)
 			})
 			scheduler.MustAdd("update-picks-results", "*/1 * * * *", func() {
 				if !resultsSyncMu.TryLock() {
 					log.Println("Results sync already running; skipping overlapping run")
+					recordSkippedSchedulerRun("update-picks-results", "overlapping run")
 					return
 				}
 				defer resultsSyncMu.Unlock()
-				UpdatePicksResults()
+				runTrackedJob("update-picks-results", UpdatePicksResults)
 			})
 
 			scheduler.Start()
