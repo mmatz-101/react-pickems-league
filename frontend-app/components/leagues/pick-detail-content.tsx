@@ -1,16 +1,19 @@
 import { getPB } from "@/app/pocketbase";
 import Navbar from "@/components/navbar/navbar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLeagueContext } from "@/lib/league-context";
-import { notFound } from "next/navigation";
+import { ArrowLeft, CalendarDays, CheckCircle2, CircleDotDashed, Radio, Trophy } from "lucide-react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
-export default async function PickDetailContent({
-  id,
-  leagueSlug,
-}: {
-  id: string;
-  leagueSlug?: string;
-}) {
+const formatDate = (date: string) => new Intl.DateTimeFormat("en-US", {
+  weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit",
+}).format(new Date(date));
+
+const formatSpread = (spread: number) => `${spread > 0 ? "+" : ""}${spread}`;
+
+export default async function PickDetailContent({ id, leagueSlug }: { id: string; leagueSlug?: string }) {
   const { pb: contextPB, league } = await getLeagueContext(leagueSlug);
   const pb = contextPB ?? (await getPB());
   let pick;
@@ -22,43 +25,62 @@ export default async function PickDetailContent({
   const game = pick.expand?.game;
   if (!game) notFound();
 
-  const backHref = league?.slug
-    ? `/user/leagues/${league.slug}/picks`
-    : "/user/picks";
+  const backHref = league?.slug ? `/user/leagues/${league.slug}/picks` : "/user/picks";
+  const selectedTeam = pick.team_selected === "HOME" ? game.home_name : game.away_name;
+  const isComplete = ["FINAL", "FINAL OT", "COMPLETE"].includes(game.status);
+  const resultStyle = pick.result_text === "WIN"
+    ? "bg-emerald-100 text-emerald-800"
+    : pick.result_text === "LOST"
+      ? "bg-destructive/10 text-destructive"
+      : pick.result_text === "PUSH"
+        ? "bg-amber-100 text-amber-800"
+        : "bg-muted text-muted-foreground";
 
   return (
     <>
       <Navbar leagueSlug={league?.slug} />
-      <main className="mx-auto max-w-2xl space-y-6 p-6">
-        <div>
-          <p className="text-sm text-muted-foreground">Pick detail</p>
-          <h1 className="text-2xl font-bold">{game.away_name} at {game.home_name}</h1>
-          <p className="text-muted-foreground">Week {pick.week}</p>
-        </div>
-        <section className="rounded border p-4">
-          <h2 className="font-semibold">Game information</h2>
-          <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div><dt className="text-sm text-muted-foreground">Date</dt><dd>{game.date}</dd></div>
-            <div><dt className="text-sm text-muted-foreground">Status</dt><dd>{game.status}</dd></div>
-            <div><dt className="text-sm text-muted-foreground">Sport</dt><dd>{game.sport ?? game.league}</dd></div>
-            <div><dt className="text-sm text-muted-foreground">TV</dt><dd>{game.tv_station || "—"}</dd></div>
-            <div><dt className="text-sm text-muted-foreground">Final score</dt><dd>{game.away_score} – {game.home_score}</dd></div>
-            <div><dt className="text-sm text-muted-foreground">Provider week</dt><dd>{game.provider_week ?? game.week}</dd></div>
-          </dl>
-        </section>
-        <section className="rounded border p-4">
-          <h2 className="font-semibold">Submitted pick</h2>
-          <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div><dt className="text-sm text-muted-foreground">Pick group</dt><dd>{pick.expand?.league_team?.name ?? "—"}</dd></div>
-            <div><dt className="text-sm text-muted-foreground">Type</dt><dd>{pick.pick_type}</dd></div>
-            <div><dt className="text-sm text-muted-foreground">Selected</dt><dd>{pick.team_selected === "HOME" ? game.home_name : game.away_name}</dd></div>
-            <div><dt className="text-sm text-muted-foreground">Spread at submission</dt><dd>{pick.pick_spread}</dd></div>
-            <div><dt className="text-sm text-muted-foreground">Result</dt><dd>{pick.result_text || "Pending"}</dd></div>
-            <div><dt className="text-sm text-muted-foreground">Points</dt><dd>{pick.result_points}</dd></div>
-          </dl>
-        </section>
-        <Link className="inline-block text-sm underline" href={backHref}>Back to picks</Link>
+      <main className="mx-auto max-w-3xl px-4 py-7 sm:px-6 lg:py-10">
+        <Button asChild className="-ml-3 mb-5" size="sm" variant="ghost">
+          <Link href={backHref}><ArrowLeft /> Back to picks</Link>
+        </Button>
+
+        <Card className="settings-card animate-fade-up overflow-hidden">
+          <CardHeader className="border-b bg-muted/30 p-5 sm:p-6">
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+              <div>
+                <CardDescription>{game.sport ?? game.league} · Week {pick.week}</CardDescription>
+                <CardTitle className="mt-1 text-2xl sm:text-3xl">{game.away_name} <span className="font-normal text-muted-foreground">at</span> {game.home_name}</CardTitle>
+                <CardDescription className="mt-2 flex items-center gap-1.5"><CalendarDays className="size-4" />{formatDate(game.date)}</CardDescription>
+              </div>
+              <span className="w-fit rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{game.status}</span>
+            </div>
+          </CardHeader>
+          <CardContent className="grid gap-3 p-5 sm:grid-cols-2 sm:p-6">
+            <DetailItem icon={Radio} label="TV coverage" value={game.tv_station || "—"} />
+            <DetailItem icon={CircleDotDashed} label="Venue" value={game.stadium || "—"} />
+            <DetailItem icon={Trophy} label={isComplete ? "Final score" : "Current score"} value={`${game.away_score} – ${game.home_score}`} />
+            <DetailItem icon={CalendarDays} label="Provider week" value={`Week ${game.provider_week ?? game.week}`} />
+          </CardContent>
+        </Card>
+
+        <Card className="settings-card animate-fade-up mt-6">
+          <CardHeader className="border-b bg-muted/30 p-5 sm:p-6">
+            <CardDescription>Your group’s selection</CardDescription>
+            <CardTitle className="mt-1 text-xl">{selectedTeam} <span className="font-normal text-muted-foreground">{formatSpread(pick.pick_spread)}</span></CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 p-5 sm:grid-cols-2 sm:p-6">
+            <DetailItem icon={CheckCircle2} label="Pick group" value={pick.expand?.league_team?.name ?? "—"} />
+            <DetailItem icon={CheckCircle2} label="Pick type" value={pick.pick_type === "BINNY" ? "Binny" : "Regular"} />
+            <DetailItem icon={CircleDotDashed} label="Spread at submission" value={formatSpread(pick.pick_spread)} />
+            <div className="rounded-lg border bg-background p-3.5"><p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Result</p><div className="mt-1.5 flex items-center justify-between gap-3"><p className="font-semibold tabular-nums">{pick.result_text || "Pending"} · {pick.result_points} pts</p><span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${resultStyle}`}>{pick.result_text || "Awaiting final"}</span></div></div>
+          </CardContent>
+          <CardFooter className="border-t bg-muted/20 px-5 py-4 sm:px-6"><p className="text-sm text-muted-foreground">The spread is locked at the moment this pick was submitted.</p></CardFooter>
+        </Card>
       </main>
     </>
   );
+}
+
+function DetailItem({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value: string }) {
+  return <div className="rounded-lg border bg-background p-3.5"><div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground"><Icon className="size-3.5" />{label}</div><p className="mt-1.5 font-semibold">{value}</p></div>;
 }
