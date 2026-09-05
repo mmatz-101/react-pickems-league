@@ -15,12 +15,15 @@ function PickProgress({ label, used, limit }: { label: string; used: number; lim
 export default async function PicksPageContent({ leagueSlug }: { leagueSlug?: string }) {
   const { pb, league, week, leagueTeam } = await getLeagueContext(leagueSlug);
   const leagueGames = await pb.collection("league_games").getFullList({ filter: `week="${week.id}" && league="${league.id}" && included=true`, expand: "game,game.home_team,game.away_team", sort: "game.date" });
-  const availableGames = leagueGames.map((item) => item.expand?.game as gameTypeExpanded).filter((game) => game && game.status !== "FINAL" && game.status !== "FINAL OT" && new Date(game.date) > new Date());
+  const allGames = leagueGames.map((item) => item.expand?.game as gameTypeExpanded).filter((game) => game);
+  const availableGames = allGames.filter((game) => game.status !== "FINAL" && game.status !== "FINAL OT" && new Date(game.date) > new Date());
   const gamesNFLData = availableGames.filter((game) => game.sport === "NFL");
   const gamesNCAAFData = availableGames.filter((game) => game.sport === "NCAAF");
   const currentPicks: pickType[] = await pb.collection("picks").getFullList({ filter: `week_record="${week.id}" && league_team="${leagueTeam.id}" && league_game != ''` });
-  const nflGameIds = new Set(gamesNFLData.map((game) => game.id));
-  const ncaafGameIds = new Set(gamesNCAAFData.map((game) => game.id));
+  // The progress cards must include picks for games that have already started.
+  // Those games are hidden from the selectable-game grid, but the picks still count.
+  const nflGameIds = new Set(allGames.filter((game) => game.sport === "NFL").map((game) => game.id));
+  const ncaafGameIds = new Set(allGames.filter((game) => game.sport === "NCAAF").map((game) => game.id));
   const countPicks = (games: Set<string>, type: "REGULAR" | "BINNY") => currentPicks.filter((pick) => games.has(pick.game) && pick.pick_type === type).length;
   const isLocked = !week.allow_picks || week.status !== "OPEN";
   const hasNFL = week.max_nfl_picks > 0 || week.max_nfl_binny_picks > 0;

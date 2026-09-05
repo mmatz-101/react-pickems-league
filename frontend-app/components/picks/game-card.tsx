@@ -23,23 +23,17 @@ import { ReturnInfo, submitPick } from "@/server/actions/picks/submit-pick";
 import { useToast } from "../ui/use-toast";
 import { pickType } from "@/server/actions/picks/helpers/pick-data";
 import Image from "next/image";
-import { format, parseISO } from "date-fns";
 import { PickType } from "@/schema/submit-pick";
 import { ShieldQuestion } from "lucide-react";
+import { formatCentralTime } from "@/lib/utils";
 
 export interface gameTypeExpanded extends gameType {
   expand: { home_team: teamType | null; away_team: teamType | null };
 }
 
-const gameDateDisplay: (dateString: string) => string = (dateString) => {
-  // Parse the ISO date string into a Date object
-  const date = parseISO(dateString);
-
-  // Format the Date object into a readable string
-  const formattedDate = format(date, "MMMM d, h:mm a");
-
-  return formattedDate;
-};
+const gameDateDisplay = (dateString: string) => formatCentralTime(dateString, {
+  month: "long",
+});
 
 export default function GameCard({
   game,

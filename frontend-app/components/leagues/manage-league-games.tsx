@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { overrideLeagueGame } from "@/server/actions/leagues/override-game";
+import { formatCentralTime } from "@/lib/utils";
 
 type Game = { id: string; away_name: string; home_name: string; sport: string; date: string; status: string };
 
@@ -22,7 +23,7 @@ export default function ManageLeagueGames({ league, week, games, includedGameIds
     toast({ title: "League games updated", description: data?.success });
     router.refresh();
   } });
-  const formatDate = (date: string) => new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(date));
+  const formatDate = (date: string) => formatCentralTime(date, { weekday: "short" });
 
   if (!games.length) return <div className="rounded-lg border border-dashed px-5 py-10 text-center"><Gamepad2 className="mx-auto mb-3 size-5 text-muted-foreground" /><p className="font-medium">No games are assigned to this week</p><p className="mt-1 text-sm text-muted-foreground">Games will appear here after the next provider sync.</p></div>;
 

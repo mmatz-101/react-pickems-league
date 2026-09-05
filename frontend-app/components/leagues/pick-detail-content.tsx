@@ -3,13 +3,15 @@ import Navbar from "@/components/navbar/navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLeagueContext } from "@/lib/league-context";
+import { formatCentralTime } from "@/lib/utils";
 import { ArrowLeft, CalendarDays, CheckCircle2, CircleDotDashed, Radio, Trophy } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-const formatDate = (date: string) => new Intl.DateTimeFormat("en-US", {
-  weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit",
-}).format(new Date(date));
+const formatDate = (date: string) => formatCentralTime(date, {
+  weekday: "long",
+  month: "long",
+});
 
 const formatSpread = (spread: number) => `${spread > 0 ? "+" : ""}${spread}`;
 
