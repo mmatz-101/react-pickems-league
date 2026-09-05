@@ -60,8 +60,9 @@ export async function getLeagueStandings(seasonId: string): Promise<LeagueStandi
     if (pick.result_text === "PUSH") current.push_count += 1;
     if (pick.fav_or_und === "FAV") current.fav_count += 1;
     if (pick.fav_or_und === "UND") current.und_count += 1;
-    current.win_percentage = current.pick_count
-      ? Number(((current.win_count / current.pick_count) * 100).toFixed(2))
+    const completedGames = current.win_count + current.lost_count + current.push_count;
+    current.win_percentage = completedGames
+      ? Number(((current.win_count / completedGames) * 100).toFixed(2))
       : 0;
     grouped.set(teamId, current);
   }
