@@ -1,4 +1,5 @@
 import { getPB } from "@/app/pocketbase";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export async function getLeagueContext(leagueSlug?: string) {
@@ -13,12 +14,23 @@ export async function getLeagueContext(leagueSlug?: string) {
     filter: `user="${userId}" && status="ACTIVE"`,
     expand: "league",
   });
-  const membership = await pb.collection("league_memberships").getFirstListItem(
-    leagueSlug
-      ? `user="${userId}" && status="ACTIVE" && league.slug="${leagueSlug}"`
-      : `user="${userId}" && status="ACTIVE"`,
-    { expand: "league" },
-  );
+  const selectedLeagueSlug = leagueSlug ?? (await cookies()).get("pickems_league")?.value;
+  let membership;
+  try {
+    membership = await pb.collection("league_memberships").getFirstListItem(
+      selectedLeagueSlug
+        ? `user="${userId}" && status="ACTIVE" && league.slug="${selectedLeagueSlug}"`
+        : `user="${userId}" && status="ACTIVE"`,
+      { expand: "league" },
+    );
+  } catch {
+    // A stale cookie (for example, after leaving a league) must never block
+    // access to the user’s remaining active leagues.
+    membership = await pb.collection("league_memberships").getFirstListItem(
+      `user="${userId}" && status="ACTIVE"`,
+      { expand: "league" },
+    );
+  }
 
   const leagueId = membership.league;
   const season = await pb.collection("seasons").getFirstListItem(
