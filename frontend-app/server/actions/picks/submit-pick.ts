@@ -33,6 +33,9 @@ export const submitPick = action
     if (!isNowBeforeGame(gameData)) {
       return { error: "Game has already started/completed.", update: Boolean(id) };
     }
+    if (await pickAlreadyExists(pb, leagueTeam, leagueGame)) {
+      return { error: "Your group already has a pick for this game.", update: true };
+    }
 
     const maxPicks = league === "NFL" ? week.max_nfl_picks : week.max_ncaaf_picks;
     const maxBinnyPicks = league === "NFL" ? week.max_nfl_binny_picks : week.max_ncaaf_binny_picks;
@@ -66,8 +69,17 @@ export const submitPick = action
       return { success: "Pick created", record };
     } catch (error) {
       console.error(error);
-      return { error: "Server error" };
+      return { error: "Unable to create the pick. Your group may already have a pick for this game." };
     }
   });
+
+async function pickAlreadyExists(pb: Awaited<ReturnType<typeof getPB>>, leagueTeam: string, leagueGame: string): Promise<boolean> {
+  try {
+    await pb.collection("picks").getFirstListItem(`league_team="${leagueTeam}" && league_game="${leagueGame}"`);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const isNowBeforeGame = (game: gameType): boolean => new Date() <= new Date(game.date);
