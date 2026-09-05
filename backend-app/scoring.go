@@ -1,8 +1,22 @@
 package main
 
-// GetGameWinner returns the winner of the game or empty string if it isn't final.
+import "strings"
+
+// IsGameComplete reports whether a provider status has a final score that can be scored.
+// Covers currently reports completed games as COMPLETE, while historical records
+// use FINAL and FINAL OT.
+func IsGameComplete(status string) bool {
+	switch strings.ToUpper(strings.TrimSpace(status)) {
+	case "FINAL", "FINAL OT", "COMPLETE":
+		return true
+	default:
+		return false
+	}
+}
+
+// GetGameWinner returns the winner of the game or empty string if it isn't complete.
 func GetGameWinner(status string, homeScore, homeSpread, awayScore, awaySpread float32) string {
-	if status != "FINAL" && status != "FINAL OT" {
+	if !IsGameComplete(status) {
 		return ""
 	}
 	if homeScore-homeSpread > awayScore {
