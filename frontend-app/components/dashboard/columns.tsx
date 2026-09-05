@@ -19,6 +19,12 @@ interface pickTypeTable extends pickType {
   expand: { game: gameType };
 }
 
+function gameScore(game: gameType) {
+  return ["FINAL", "FINAL OT", "COMPLETE"].includes(game.status)
+    ? `${game.away_score} – ${game.home_score}`
+    : "—";
+}
+
 function pickDetailHref(id: string) {
   if (typeof window !== "undefined") {
     const match = window.location.pathname.match(/^\/user\/leagues\/([^/]+)/);
@@ -46,6 +52,11 @@ export const mobileColumns: ColumnDef<pickTypeTable>[] = [
   {
     accessorKey: "pick_type",
     header: "Pick Type",
+  },
+  {
+    id: "score",
+    header: "Score",
+    cell: ({ row }) => gameScore(row.original.expand.game),
   },
   {
     id: "action",
@@ -130,15 +141,9 @@ export const columns: ColumnDef<pickTypeTable>[] = [
     header: "Result",
   },
   {
-    accessorKey: "Score",
-    cell: ({ row }) => {
-      const pick = row.original;
-      if (pick.expand.game.status === "FINAL") {
-        return (
-          pick.expand.game.home_score + " - " + pick.expand.game.away_score
-        );
-      }
-    },
+    id: "score",
+    header: "Score",
+    cell: ({ row }) => gameScore(row.original.expand.game),
   },
   {
     id: "action",
