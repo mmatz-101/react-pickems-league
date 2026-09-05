@@ -5,6 +5,7 @@ import { action } from "@/lib/safe-action";
 import { LeagueInviteSchema } from "@/schema/league-invite-schema";
 import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 const hashToken = (token: string) =>
   createHash("sha256").update(token).digest("hex");
@@ -40,8 +41,11 @@ export const createLeagueInvite = action
       status: "ACTIVE",
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const inviteUrl = `${baseUrl}/join/${rawToken}`;
+    const requestHeaders = await headers();
+    const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+    const protocol = requestHeaders.get("x-forwarded-proto") ?? "https";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? (host ? `${protocol}://${host}` : "http://localhost:3000");
+    const inviteUrl = `${baseUrl.replace(/\/$/, "")}/join/${rawToken}`;
 
     revalidatePath("/user/league/invites");
     return {
