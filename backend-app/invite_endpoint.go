@@ -559,45 +559,50 @@ func moveLeagueMember(e *core.RequestEvent) error {
 	if err := e.BindBody(&body); err != nil || body.Membership == "" || body.LeagueTeam == "" {
 		return e.BadRequestError("Membership and group are required.", err)
 	}
-	memberships, err := e.App.FindCollectionByNameOrId("league_memberships")
-	if err != nil {
-		return e.InternalServerError("Membership collection is unavailable.", err)
-	}
-	membership, err := e.App.FindRecordById(memberships, body.Membership)
-	if err != nil {
-		return e.NotFoundError("Membership not found.", nil)
-	}
-	leagueID := membership.GetString("league")
-	if err := requireCommissioner(e.App, leagueID, e.Auth.Id); err != nil {
-		return e.ForbiddenError(err.Error(), nil)
-	}
-	teams, err := e.App.FindCollectionByNameOrId("league_teams")
-	if err != nil {
-		return e.InternalServerError("Team collection is unavailable.", err)
-	}
-	target, err := e.App.FindRecordById(teams, body.LeagueTeam)
-	if err != nil || target.GetString("league") != leagueID {
-		return e.BadRequestError("Target group is not in this league.", nil)
-	}
-	teamMembers, err := e.App.FindCollectionByNameOrId("league_team_members")
-	if err != nil {
-		return e.InternalServerError("Team membership collection is unavailable.", err)
-	}
-	if existing, findErr := e.App.FindFirstRecordByFilter(teamMembers, "membership = {:membership}", map[string]any{"membership": body.Membership}); findErr == nil {
-		if existing.GetString("league_team") == target.Id {
-			return e.JSON(http.StatusOK, map[string]string{"message": "Member is already in this group."})
+	message := "Member moved."
+	err := e.App.RunInTransaction(func(txApp core.App) error {
+		memberships, err := txApp.FindCollectionByNameOrId("league_memberships")
+		if err != nil {
+			return err
 		}
-		if err := e.App.Delete(existing); err != nil {
-			return e.InternalServerError("Unable to remove old group membership.", err)
+		membership, err := txApp.FindRecordById(memberships, body.Membership)
+		if err != nil {
+			return e.NotFoundError("Membership not found.", nil)
 		}
+		leagueID := membership.GetString("league")
+		if err := requireCommissioner(txApp, leagueID, e.Auth.Id); err != nil {
+			return e.ForbiddenError(err.Error(), nil)
+		}
+		teams, err := txApp.FindCollectionByNameOrId("league_teams")
+		if err != nil {
+			return err
+		}
+		target, err := txApp.FindRecordById(teams, body.LeagueTeam)
+		if err != nil || target.GetString("league") != leagueID || target.GetString("status") != "ACTIVE" {
+			return e.BadRequestError("Target group is not active in this league.", nil)
+		}
+		teamMembers, err := txApp.FindCollectionByNameOrId("league_team_members")
+		if err != nil {
+			return err
+		}
+		if existing, findErr := txApp.FindFirstRecordByFilter(teamMembers, "membership = {:membership}", map[string]any{"membership": body.Membership}); findErr == nil {
+			if existing.GetString("league_team") == target.Id {
+				message = "Member is already in this group."
+				return nil
+			}
+			if err := txApp.Delete(existing); err != nil {
+				return err
+			}
+		}
+		assignment := core.NewRecord(teamMembers)
+		assignment.Set("league_team", target.Id)
+		assignment.Set("membership", body.Membership)
+		return txApp.Save(assignment)
+	})
+	if err != nil {
+		return e.BadRequestError("Unable to move member to that group.", err)
 	}
-	assignment := core.NewRecord(teamMembers)
-	assignment.Set("league_team", target.Id)
-	assignment.Set("membership", body.Membership)
-	if err := e.App.Save(assignment); err != nil {
-		return e.InternalServerError("Unable to move member.", err)
-	}
-	return e.JSON(http.StatusOK, map[string]string{"message": "Member moved."})
+	return e.JSON(http.StatusOK, map[string]string{"message": message})
 }
 
 func requireCommissioner(app core.App, leagueID string, userID string) error {
@@ -695,7 +700,9 @@ func overrideLeagueGame(e *core.RequestEvent) error {
 		return e.InternalServerError("Unable to save game override.", err)
 	}
 	message := "Game included for this league."
-	if !body.Included { message = "Game excluded from this league." }
+	if !body.Included {
+		message = "Game excluded from this league."
+	}
 	return e.JSON(http.StatusOK, map[string]string{"message": message})
 }
 

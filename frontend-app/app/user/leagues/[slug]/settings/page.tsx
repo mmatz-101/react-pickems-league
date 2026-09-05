@@ -68,7 +68,7 @@ export default async function LeagueSettingsPage({
     is_current: week.is_current,
   };
   const members = isCommissioner ? await pb.collection("league_memberships").getFullList({ filter: `league="${membership.league}"`, sort: "display_name" }) : [];
-  const teamMembers = isCommissioner ? await pb.collection("league_team_members").getFullList({ expand: "league_team" }) : [];
+  const teamMembers = isCommissioner ? await pb.collection("league_team_members").getFullList({ filter: `league_team.league="${membership.league}"`, expand: "league_team" }) : [];
   const currentTeamMember = await pb.collection("league_team_members").getFirstListItem(`membership="${membership.id}"`, { expand: "league_team" });
   const teams = isCommissioner ? await pb.collection("league_teams").getFullList({ filter: `league="${membership.league}" && status="ACTIVE"`, sort: "name" }) : [];
   const weekGames = isCommissioner ? await pb.collection("games").getFullList({ filter: `date >= "${week.start_date}" && date < "${week.end_date}"`, sort: "date" }) : [];
