@@ -320,7 +320,7 @@ func UpdatePicksResults() {
 		for _, record := range picks {
 			checked++
 			game, gameErr := pocketbaseApp.FindRecordById("games", record.GetString("game"))
-			if gameErr != nil || !IsGameComplete(game.GetString("status")) {
+			if gameErr != nil || !IsGameComplete(game.GetString("status")) || record.GetString("result_text") != "" {
 				continue
 			}
 			pick := PickDataExpand{ID: record.Id, PickSpread: float32(record.GetFloat("pick_spread")), PickType: record.GetString("pick_type"), TeamSelected: record.GetString("team_selected")}
