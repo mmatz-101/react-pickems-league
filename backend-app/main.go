@@ -152,7 +152,7 @@ func FetchCoversData() {
 				}
 			}
 
-			homeSpread, awaySpread, hasSpread := LatestBet365Spread(game.Odds)
+			homeSpread, awaySpread, hasSpread := LatestPreferredSpread(game.Odds)
 			existing, err := GetGameData(strconv.Itoa(game.Game.GameID))
 			if err != nil {
 				stats.Errors++

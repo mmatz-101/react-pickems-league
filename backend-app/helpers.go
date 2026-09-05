@@ -67,26 +67,31 @@ func gameRequestBody(game CoversGame, league string, week int, homeSpread, awayS
 	return GameDataRequestBody{GameID: fmt.Sprintf("%d", game.GameID), Date: game.StartDate, Stadium: game.VenueName, Status: status, HomeSpread: homeSpread, AwaySpread: awaySpread, HomeTeam: GetTeamID(game.HomeTeam.DisplayName, league), HomeName: game.HomeTeam.DisplayName, AwayTeam: GetTeamID(game.AwayTeam.DisplayName, league), AwayName: game.AwayTeam.DisplayName, HomeScore: game.HomeTeamScore, AwayScore: game.AwayTeamScore, League: strings.ToUpper(league), Sport: strings.ToUpper(league), ProviderWeek: week, Week: week, PickWinner: GetGameWinner(status, float32(game.HomeTeamScore), homeSpread, float32(game.AwayTeamScore), awaySpread)}
 }
 
-func LatestBet365Spread(books []CoversBookOdds) (float32, float32, bool) {
-	var latest CoversSpreadHistory
-	found := false
-	for _, book := range books {
-		if !strings.EqualFold(book.SportsbookName, "bet365") {
-			continue
-		}
-		for _, line := range book.SpreadHistory {
-			if line.Spread == 0 || line.OddsDate == "" {
+// LatestPreferredSpread returns the newest valid line from the first
+// available sportsbook in priority order. Bet365 remains the primary source;
+// DraftKings is used only when Bet365 has no valid line for the game.
+func LatestPreferredSpread(books []CoversBookOdds) (float32, float32, bool) {
+	for _, sportsbook := range []string{"bet365", "draftkings"} {
+		var latest CoversSpreadHistory
+		found := false
+		for _, book := range books {
+			if !strings.EqualFold(book.SportsbookName, sportsbook) {
 				continue
 			}
-			if !found || line.OddsDate > latest.OddsDate {
-				latest, found = line, true
+			for _, line := range book.SpreadHistory {
+				if line.Spread == 0 || line.OddsDate == "" {
+					continue
+				}
+				if !found || line.OddsDate > latest.OddsDate {
+					latest, found = line, true
+				}
 			}
 		}
+		if found {
+			return latest.Spread, -latest.Spread, true
+		}
 	}
-	if !found {
-		return 0, 0, false
-	}
-	return latest.Spread, -latest.Spread, true
+	return 0, 0, false
 }
 
 func UpdateTeamLogo(team CoversTeam, league string) (bool, bool) {
