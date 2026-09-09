@@ -67,12 +67,15 @@ export async function getLeagueStandings(seasonId: string): Promise<LeagueStandi
     grouped.set(teamId, current);
   }
 
+  // There is always one unambiguous standing: points first, then the better
+  // record, then the group that has made more picks. A final alphabetical sort
+  // makes an otherwise exact tie deterministic rather than emitting rank 0.
   return [...grouped.values()]
-    .sort((a, b) => b.result_points - a.result_points)
-    .map((standing, index, all) => ({
-      ...standing,
-      rank: index > 0 && standing.result_points === all[index - 1].result_points
-        ? all[index - 1].rank
-        : index + 1,
-    }));
+    .sort((a, b) => {
+      if (b.result_points !== a.result_points) return b.result_points - a.result_points;
+      if (b.win_percentage !== a.win_percentage) return b.win_percentage - a.win_percentage;
+      if (b.pick_count !== a.pick_count) return b.pick_count - a.pick_count;
+      return a.team_name.localeCompare(b.team_name);
+    })
+    .map((standing, index) => ({ ...standing, rank: index + 1 }));
 }

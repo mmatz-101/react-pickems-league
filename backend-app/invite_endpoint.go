@@ -111,7 +111,6 @@ func registerInviteRoutes(app *pocketbase.PocketBase) {
 			e.Router.POST("/api/league-weeks/create", createLeagueWeek).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-seasons/create", createLeagueSeason).Bind(apis.RequireAuth())
 			e.Router.POST("/api/league-seasons/activate", activateLeagueSeason).Bind(apis.RequireAuth())
-			e.Router.POST("/api/league-weeks/set-current", setCurrentLeagueWeek).Bind(apis.RequireAuth())
 			return e.Next()
 		},
 		Priority: 999,
@@ -140,7 +139,7 @@ func activateLeagueSeason(e *core.RequestEvent) error {
 			return e.InternalServerError("Unable to activate season.", err)
 		}
 	}
-	weeks, err := e.App.FindRecordsByFilter("weeks", "season = {:season}", "", 0, 0, dbx.Params{"season": season.Id})
+	weeks, err := e.App.FindRecordsByFilter("weeks", "season = {:season}", "number", 0, 0, dbx.Params{"season": season.Id})
 	if err != nil {
 		return e.InternalServerError("Unable to load season weeks.", err)
 	}
@@ -165,6 +164,22 @@ func activateLeagueSeason(e *core.RequestEvent) error {
 		week.Set("is_current", true)
 		if err := e.App.Save(week); err != nil {
 			return e.InternalServerError("Unable to create initial season week.", err)
+		}
+	} else {
+		// A commissioner may schedule weeks before activating a season. Open the
+		// first scheduled week rather than requiring a separate status change.
+		hasCurrent := false
+		for _, item := range weeks {
+			hasCurrent = hasCurrent || item.GetBool("is_current")
+		}
+		if !hasCurrent {
+			first := weeks[0]
+			first.Set("status", "OPEN")
+			first.Set("allow_picks", true)
+			first.Set("is_current", true)
+			if err := e.App.Save(first); err != nil {
+				return e.InternalServerError("Unable to open the first scheduled week.", err)
+			}
 		}
 	}
 	return e.JSON(http.StatusOK, map[string]string{"message": "Season activated."})
@@ -230,8 +245,13 @@ func createLeagueSeason(e *core.RequestEvent) error {
 
 func createLeagueWeek(e *core.RequestEvent) error {
 	var body createLeagueWeekRequest
-	if err := e.BindBody(&body); err != nil || body.Season == "" || body.Number <= 0 || body.Name == "" {
-		return e.BadRequestError("Season, week number, and name are required.", err)
+	if err := e.BindBody(&body); err != nil || body.Season == "" || body.Number <= 0 || body.Name == "" || body.StartDate == "" || body.EndDate == "" {
+		return e.BadRequestError("Season, week number, name, start date, and end date are required.", err)
+	}
+	start, startErr := time.Parse(time.RFC3339, body.StartDate)
+	end, endErr := time.Parse(time.RFC3339, body.EndDate)
+	if startErr != nil || endErr != nil || !end.After(start) {
+		return e.BadRequestError("The week end date must be after its start date.", nil)
 	}
 	season, err := e.App.FindRecordById("seasons", body.Season)
 	if err != nil {
@@ -266,7 +286,10 @@ func createLeagueWeek(e *core.RequestEvent) error {
 	if err := e.App.Save(week); err != nil {
 		return e.InternalServerError("Unable to create week.", err)
 	}
-	return e.JSON(http.StatusOK, map[string]string{"id": week.Id, "message": "League week created."})
+	// Covers the case where the prior week completed before its successor was
+	// scheduled. The newly created next week opens immediately and safely.
+	AdvanceCompletedLeagueWeeks()
+	return e.JSON(http.StatusOK, map[string]string{"id": week.Id, "message": "Week scheduled. It will open automatically when the current week is complete."})
 }
 
 func updateLeagueWeek(e *core.RequestEvent) error {
@@ -289,12 +312,9 @@ func updateLeagueWeek(e *core.RequestEvent) error {
 	if err := requireCommissioner(e.App, season.GetString("league"), e.Auth.Id); err != nil {
 		return e.ForbiddenError(err.Error(), nil)
 	}
-	if body.Status != nil {
-		week.Set("status", *body.Status)
-	}
-	if body.AllowPicks != nil {
-		week.Set("allow_picks", *body.AllowPicks)
-	}
+	// Status, pick availability, and the current week are lifecycle-managed.
+	// Commissioners configure a schedule and pick limits; the system opens the
+	// next week once every included game in the current week is final.
 	if body.StartDate != nil {
 		week.Set("start_date", *body.StartDate)
 	}
@@ -313,24 +333,8 @@ func updateLeagueWeek(e *core.RequestEvent) error {
 	if body.MaxNCAAFBinnyPicks != nil {
 		week.Set("max_ncaaf_binny_picks", *body.MaxNCAAFBinnyPicks)
 	}
-	if body.IsCurrent != nil && *body.IsCurrent {
-		all, _ := e.App.FindRecordsByFilter(weeks, "season = {:season}", "", 0, 0, dbx.Params{"season": season.Id})
-		for _, item := range all {
-			item.Set("is_current", item.Id == week.Id)
-			if saveErr := e.App.Save(item); saveErr != nil {
-				return e.InternalServerError("Unable to update current week.", saveErr)
-			}
-		}
-	} else if body.IsCurrent != nil {
-		week.Set("is_current", false)
-		if err := e.App.Save(week); err != nil {
-			return e.InternalServerError("Unable to update week.", err)
-		}
-	}
-	if body.IsCurrent == nil || !*body.IsCurrent {
-		if err := e.App.Save(week); err != nil {
-			return e.InternalServerError("Unable to update week.", err)
-		}
+	if err := e.App.Save(week); err != nil {
+		return e.InternalServerError("Unable to update week.", err)
 	}
 	return e.JSON(http.StatusOK, map[string]string{"message": "League week updated."})
 }

@@ -63,9 +63,8 @@ export default async function LeagueSettingsPage({
   const nextSeasonYear = (leagueSeasons[0]?.year ?? new Date().getUTCFullYear()) + 1;
   const manageableWeek = {
     id: week.id, start_date: week.start_date, end_date: week.end_date, status: week.status,
-    allow_picks: week.allow_picks, max_nfl_picks: week.max_nfl_picks, max_ncaaf_picks: week.max_ncaaf_picks,
+    max_nfl_picks: week.max_nfl_picks, max_ncaaf_picks: week.max_ncaaf_picks,
     max_nfl_binny_picks: week.max_nfl_binny_picks, max_ncaaf_binny_picks: week.max_ncaaf_binny_picks,
-    is_current: week.is_current,
   };
   const members = isCommissioner ? await pb.collection("league_memberships").getFullList({ filter: `league="${membership.league}"`, sort: "display_name" }) : [];
   const teamMembers = isCommissioner ? await pb.collection("league_team_members").getFullList({ filter: `league_team.league="${membership.league}"`, expand: "league_team" }) : [];
@@ -114,15 +113,18 @@ export default async function LeagueSettingsPage({
         </SettingCard>
 
         {isCommissioner && <>
-          <SettingCard description="Select the season and week members will see across the league." icon={CalendarDays} title="League period">
-            <SelectLeaguePeriod seasons={leagueSeasons.map((item) => ({ id: item.id, name: item.name, year: item.year, status: item.status }))} weeks={seasonWeeks.map((item) => ({ id: item.id, name: item.name, number: item.number, is_current: item.is_current }))} activeSeason={season.id} currentWeek={week.id} />
+          <SettingCard description="Schedule weeks once. The next one opens automatically when every included game in the current week is final." icon={CalendarDays} title="Season schedule">
+            <SelectLeaguePeriod seasons={leagueSeasons.map((item) => ({ id: item.id, name: item.name, year: item.year, status: item.status }))} activeSeason={season.id} />
+            <ol className="mt-6 grid gap-2 sm:grid-cols-2" aria-label="Week schedule">
+              {seasonWeeks.map((item) => <li className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${item.is_current ? "border-primary/30 bg-primary/5" : ""}`} key={item.id}><span className="font-medium">{item.name}</span><span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{item.is_current ? item.status === "COMPLETED" ? "Complete · add next" : "Current" : item.status === "SETUP" ? "Scheduled" : item.status}</span></li>)}
+            </ol>
           </SettingCard>
           <SettingCard description="Set up the next season before adding its weeks." icon={CalendarDays} title="Create a future season">
             <CreateLeagueSeason league={membership.league} nextYear={nextSeasonYear} />
           </SettingCard>
-          <SettingCard description={`Editing ${week.name} in ${season.name}. Update dates, pick limits, scoring window, and availability.`} icon={ShieldCheck} title={`Current week settings · Week ${week.number}`}>
+          <SettingCard description={`Configure ${week.name} in ${season.name}. Pick availability and progression are handled automatically.`} icon={ShieldCheck} title={`Current week · Week ${week.number}`}>
             <ManageLeagueWeek week={manageableWeek} />
-            <div className="mt-8 border-t pt-7"><h3 className="font-semibold">Create another week</h3><p className="mt-1 text-sm text-muted-foreground">Add the next week to {season.name}.</p><CreateLeagueWeek season={season.id} nextNumber={seasonWeeks.length + 1} /></div>
+            <div className="mt-8 border-t pt-7"><h3 className="font-semibold">Schedule the next week</h3><p className="mt-1 text-sm text-muted-foreground">It stays scheduled until every included game in the current week has a final result, then opens automatically.</p><CreateLeagueWeek season={season.id} nextNumber={(seasonWeeks.at(-1)?.number ?? 0) + 1} /></div>
           </SettingCard>
           <SettingCard description="Choose which provider games are available for members to pick this week." icon={ShieldCheck} title="League game availability">
             <ManageLeagueGames league={membership.league} week={week.id} games={weekGames.map((game) => ({ id: game.id, away_name: game.away_name, home_name: game.home_name, sport: game.sport ?? game.league, date: game.date, status: game.status }))} includedGameIds={leagueGames.filter((game) => game.included).map((game) => game.game)} />

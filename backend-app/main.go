@@ -335,6 +335,10 @@ func UpdatePicksResults() {
 			updated++
 		}
 	}
+	// A week advances only after its included games have final results. This is
+	// intentionally run after scoring so standings and the next pick window are
+	// updated together on the same scheduler pass.
+	AdvanceCompletedLeagueWeeks()
 	setSchedulerCounts("update-picks-results", SchedulerCounts{Received: checked, Updated: updated, Failed: errorsCount})
 	log.Printf("Results update: picks_checked=%d, picks_updated=%d, errors=%d", checked, updated, errorsCount)
 }

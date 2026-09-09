@@ -15,15 +15,12 @@ export const updateLeagueWeek = action
       headers: { Authorization: `Bearer ${pb.authStore.token}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         week: parsedInput.week,
-        status: parsedInput.status,
-        allow_picks: parsedInput.allowPicks,
         start_date: parsedInput.startDate,
         end_date: parsedInput.endDate,
         max_nfl_picks: parsedInput.maxNFLPicks,
         max_ncaaf_picks: parsedInput.maxNCAAFPicks,
         max_nfl_binny_picks: parsedInput.maxNFLBinnyPicks,
         max_ncaaf_binny_picks: parsedInput.maxNCAAFBinnyPicks,
-        is_current: parsedInput.isCurrent,
       }),
       cache: "no-store",
     });

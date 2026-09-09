@@ -16,4 +16,3 @@ async function callPeriodEndpoint(path: string, id: string) {
 }
 
 export const activateLeagueSeason = action.inputSchema(SelectLeaguePeriodSchema).action(async ({ parsedInput }) => callPeriodEndpoint("/api/league-seasons/activate", parsedInput.id));
-export const setCurrentLeagueWeek = action.inputSchema(SelectLeaguePeriodSchema).action(async ({ parsedInput }) => callPeriodEndpoint("/api/league-weeks/set-current", parsedInput.id));
