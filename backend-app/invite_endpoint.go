@@ -312,9 +312,19 @@ func updateLeagueWeek(e *core.RequestEvent) error {
 	if err := requireCommissioner(e.App, season.GetString("league"), e.Auth.Id); err != nil {
 		return e.ForbiddenError(err.Error(), nil)
 	}
-	// Status, pick availability, and the current week are lifecycle-managed.
-	// Commissioners configure a schedule and pick limits; the system opens the
-	// next week once every included game in the current week is final.
+	// Week progression is lifecycle-managed. The one commissioner-controlled
+	// transition is locking the current slate; after all its games are final,
+	// the scheduler completes it and opens the next scheduled week.
+	if body.Status != nil {
+		if *body.Status != "LOCKED" || !week.GetBool("is_current") || week.GetString("status") != "OPEN" {
+			return e.BadRequestError("Only the current open week can be locked.", nil)
+		}
+		week.Set("status", "LOCKED")
+		week.Set("allow_picks", false)
+	}
+	if body.AllowPicks != nil || body.IsCurrent != nil {
+		return e.BadRequestError("Pick availability and the current week are managed automatically.", nil)
+	}
 	if body.StartDate != nil {
 		week.Set("start_date", *body.StartDate)
 	}
@@ -695,9 +705,20 @@ func overrideLeagueGame(e *core.RequestEvent) error {
 	if findErr != nil {
 		leagueGame = core.NewRecord(leagueGames)
 		leagueGame.Set("league", body.League)
-		leagueGame.Set("week", body.Week)
 		leagueGame.Set("game", body.Game)
+	} else if leagueGame.GetString("week") != body.Week {
+		// A provider can revise a kickoff time after its game was first synced.
+		// Reassign an unpicked game to the commissioner-selected week instead of
+		// reporting success while leaving it invisible in that week's settings.
+		picks, pickErr := e.App.FindRecordsByFilter("picks", "league_game = {:leagueGame}", "", 1, 0, dbx.Params{"leagueGame": leagueGame.Id})
+		if pickErr != nil {
+			return e.InternalServerError("Unable to verify game picks.", pickErr)
+		}
+		if len(picks) > 0 {
+			return e.BadRequestError("This game already has picks in another week and cannot be moved.", nil)
+		}
 	}
+	leagueGame.Set("week", body.Week)
 	leagueGame.Set("included", body.Included)
 	leagueGame.Set("manual_override", true)
 	if err := e.App.Save(leagueGame); err != nil {

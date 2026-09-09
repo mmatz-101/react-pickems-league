@@ -113,7 +113,7 @@ export default async function LeagueSettingsPage({
         </SettingCard>
 
         {isCommissioner && <>
-          <SettingCard description="Schedule weeks once. The next one opens automatically when every included game in the current week is final." icon={CalendarDays} title="Season schedule">
+          <SettingCard description="Schedule weeks once. After you lock the current slate and every included game is final, the next one opens automatically." icon={CalendarDays} title="Season schedule">
             <SelectLeaguePeriod seasons={leagueSeasons.map((item) => ({ id: item.id, name: item.name, year: item.year, status: item.status }))} activeSeason={season.id} />
             <ol className="mt-6 grid gap-2 sm:grid-cols-2" aria-label="Week schedule">
               {seasonWeeks.map((item) => <li className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${item.is_current ? "border-primary/30 bg-primary/5" : ""}`} key={item.id}><span className="font-medium">{item.name}</span><span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{item.is_current ? item.status === "COMPLETED" ? "Complete · add next" : "Current" : item.status === "SETUP" ? "Scheduled" : item.status}</span></li>)}
@@ -124,7 +124,7 @@ export default async function LeagueSettingsPage({
           </SettingCard>
           <SettingCard description={`Configure ${week.name} in ${season.name}. Pick availability and progression are handled automatically.`} icon={ShieldCheck} title={`Current week · Week ${week.number}`}>
             <ManageLeagueWeek week={manageableWeek} />
-            <div className="mt-8 border-t pt-7"><h3 className="font-semibold">Schedule the next week</h3><p className="mt-1 text-sm text-muted-foreground">It stays scheduled until every included game in the current week has a final result, then opens automatically.</p><CreateLeagueWeek season={season.id} nextNumber={(seasonWeeks.at(-1)?.number ?? 0) + 1} /></div>
+            <div className="mt-8 border-t pt-7"><h3 className="font-semibold">Schedule the next week</h3><p className="mt-1 text-sm text-muted-foreground">It stays scheduled until you lock the current slate and every included game has a final result, then opens automatically.</p><CreateLeagueWeek season={season.id} nextNumber={(seasonWeeks.at(-1)?.number ?? 0) + 1} /></div>
           </SettingCard>
           <SettingCard description="Choose which provider games are available for members to pick this week." icon={ShieldCheck} title="League game availability">
             <ManageLeagueGames league={membership.league} week={week.id} games={weekGames.map((game) => ({ id: game.id, away_name: game.away_name, home_name: game.home_name, sport: game.sport ?? game.league, date: game.date, status: game.status }))} includedGameIds={leagueGames.filter((game) => game.included).map((game) => game.game)} />

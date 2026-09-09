@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const UpdateLeagueWeekSchema = z.object({
   week: z.string().min(1),
+  status: z.literal("LOCKED").optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   maxNFLPicks: z.number().int().nonnegative().optional(),

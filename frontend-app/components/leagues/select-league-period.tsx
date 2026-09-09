@@ -15,6 +15,6 @@ export default function SelectLeaguePeriod({ seasons, activeSeason }: { seasons:
       <SelectTrigger><SelectValue /></SelectTrigger>
       <SelectContent>{seasons.map((season) => <SelectItem key={season.id} value={season.id}>{season.name} ({season.year}) — {season.status}</SelectItem>)}</SelectContent>
     </Select>
-    <span className="block pt-1 text-xs font-normal text-muted-foreground">Activating a season opens its first scheduled week. Week changes happen automatically after final results.</span>
+    <span className="block pt-1 text-xs font-normal text-muted-foreground">Activating a season opens its first scheduled week. A locked week advances automatically after final results.</span>
   </label>;
 }

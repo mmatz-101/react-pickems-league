@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { updateLeagueWeek } from "@/server/actions/leagues/update-week";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type ManageableWeek = {
   id: string;
@@ -27,8 +28,9 @@ const lifecycleCopy = {
 export default function ManageLeagueWeek({ week }: { week: ManageableWeek }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const router = useRouter();
   const { execute, status } = useAction(updateLeagueWeek, {
-    onSuccess: ({ data }) => { setMessage(data?.success ?? ""); setError(data?.error ?? ""); },
+    onSuccess: ({ data }) => { setMessage(data?.success ?? ""); setError(data?.error ?? ""); if (!data?.error) router.refresh(); },
     onError: () => setError("Unable to update week."),
   });
 
@@ -58,8 +60,11 @@ export default function ManageLeagueWeek({ week }: { week: ManageableWeek }) {
         <label className="block space-y-1 text-sm font-medium">NFL Binny picks<Input name="maxNFLBinnyPicks" type="number" defaultValue={week.max_nfl_binny_picks} min="0" /></label>
         <label className="block space-y-1 text-sm font-medium">NCAA Binny picks<Input name="maxNCAAFBinnyPicks" type="number" defaultValue={week.max_ncaaf_binny_picks} min="0" /></label>
       </div>
-      <p className="text-sm text-muted-foreground">Week progression is automatic. Add the next week before this one ends so it can open as soon as results are final.</p>
-      <Button disabled={status === "executing"} type="submit">{status === "executing" ? "Saving…" : "Save schedule"}</Button>
+      <p className="text-sm text-muted-foreground">Lock this slate after picks are final. Once every included game has a final result, the next scheduled week opens automatically.</p>
+      <div className="flex flex-wrap gap-3">
+        <Button disabled={status === "executing"} type="submit">{status === "executing" ? "Saving…" : "Save schedule"}</Button>
+        {week.status === "OPEN" && <Button disabled={status === "executing"} onClick={() => execute({ week: week.id, status: "LOCKED" })} type="button" variant="outline">Lock this week</Button>}
+      </div>
       {message && <p className="text-sm text-green-600">{message}</p>}
       {error && <p className="text-sm text-destructive">{error}</p>}
     </form>

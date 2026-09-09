@@ -15,6 +15,7 @@ export const updateLeagueWeek = action
       headers: { Authorization: `Bearer ${pb.authStore.token}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         week: parsedInput.week,
+        status: parsedInput.status,
         start_date: parsedInput.startDate,
         end_date: parsedInput.endDate,
         max_nfl_picks: parsedInput.maxNFLPicks,

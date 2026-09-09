@@ -33,9 +33,9 @@ func SyncLeagueGames() {
 		return
 	}
 
-	existing := map[string]bool{}
+	existing := map[string]*core.Record{}
 	for _, record := range leagueGames {
-		existing[record.GetString("league")+":"+record.GetString("game")] = true
+		existing[record.GetString("league")+":"+record.GetString("game")] = record
 	}
 
 	created := 0
@@ -58,7 +58,22 @@ func SyncLeagueGames() {
 						continue
 					}
 					key := league.Id + ":" + game.Id
-					if existing[key] || !gameIncluded(game, week) {
+					if !gameIncluded(game, week) {
+						continue
+					}
+					if record := existing[key]; record != nil {
+						if record.GetString("week") == week.Id || record.GetBool("manual_override") {
+							continue
+						}
+						picks, pickErr := pocketbaseApp.FindRecordsByFilter("picks", "league_game = {:leagueGame}", "", 1, 0, dbx.Params{"leagueGame": record.Id})
+						if pickErr != nil || len(picks) > 0 {
+							continue // Never move a historical assignment with submitted picks.
+						}
+						record.Set("week", week.Id)
+						record.Set("included", true)
+						if saveErr := pocketbaseApp.Save(record); saveErr != nil {
+							log.Println("Unable to move league game to its scheduled week:", saveErr)
+						}
 						continue
 					}
 					leagueGamesCollection, err := pocketbaseApp.FindCollectionByNameOrId("league_games")
@@ -76,7 +91,7 @@ func SyncLeagueGames() {
 						log.Println("Unable to create league game:", err)
 						continue
 					}
-					existing[key] = true
+					existing[key] = record
 					created++
 				}
 			}

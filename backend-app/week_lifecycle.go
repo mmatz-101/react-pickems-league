@@ -10,8 +10,9 @@ import (
 // AdvanceCompletedLeagueWeeks keeps a league's schedule moving without a
 // commissioner having to interpret or change internal week statuses. A week is
 // complete only after it has at least one included league game and every one of
-// those games has a final, scoreable result. The next scheduled SETUP week then
-// becomes the single current, pickable week.
+// those games has a final, scoreable result after the commissioner locks the
+// slate. The next scheduled SETUP week then becomes the single current,
+// pickable week.
 func AdvanceCompletedLeagueWeeks() {
 	if pocketbaseApp == nil {
 		return
@@ -41,7 +42,9 @@ func advanceSeasonWeek(season *core.Record) {
 			break
 		}
 	}
-	if current == nil || (current.GetString("status") != "OPEN" && current.GetString("status") != "LOCKED") {
+	// Locking is the commissioner's explicit signal that this week's slate is
+	// final. Never advance an open week, even if its games happen to be final.
+	if current == nil || current.GetString("status") != "LOCKED" {
 		return
 	}
 	complete, err := isLeagueWeekComplete(season.GetString("league"), current.Id)
