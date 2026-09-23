@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getLeagueContext } from "@/lib/league-context";
 import { formatCentralTime } from "@/lib/utils";
+import TeamHistory from "@/components/picks/team-history";
+import { getTeamGames } from "@/lib/team-records";
 import { ArrowLeft, CalendarDays, CheckCircle2, CircleDotDashed, Radio, Trophy } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -16,7 +18,7 @@ const formatDate = (date: string) => formatCentralTime(date, {
 const formatSpread = (spread: number) => `${spread > 0 ? "+" : ""}${spread}`;
 
 export default async function PickDetailContent({ id, leagueSlug }: { id: string; leagueSlug?: string }) {
-  const { pb: contextPB, league } = await getLeagueContext(leagueSlug);
+  const { pb: contextPB, league, season } = await getLeagueContext(leagueSlug);
   const pb = contextPB ?? (await getPB());
   let pick;
   try {
@@ -26,6 +28,7 @@ export default async function PickDetailContent({ id, leagueSlug }: { id: string
   }
   const game = pick.expand?.game;
   if (!game) notFound();
+  const teamGames = await getTeamGames(pb, season.id, league.id);
 
   const backHref = league?.slug ? `/user/leagues/${league.slug}/picks` : "/user/picks";
   const selectedTeam = pick.team_selected === "HOME" ? game.home_name : game.away_name;
@@ -51,7 +54,7 @@ export default async function PickDetailContent({ id, leagueSlug }: { id: string
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div>
                 <CardDescription>{game.sport ?? game.league} · Week {pick.week}</CardDescription>
-                <CardTitle className="mt-1 text-2xl sm:text-3xl">{game.away_name} <span className="font-normal text-muted-foreground">at</span> {game.home_name}</CardTitle>
+                <CardTitle className="mt-1 text-2xl sm:text-3xl">{game.away_name} <span className="font-normal text-muted-foreground">at</span> {game.home_name}</CardTitle><div className="mt-2 flex gap-3"><TeamHistory teamName={game.away_name} games={teamGames[game.away_name]} /><TeamHistory teamName={game.home_name} games={teamGames[game.home_name]} /></div>
                 <CardDescription className="mt-2 flex items-center gap-1.5"><CalendarDays className="size-4" />{formatDate(game.date)}</CardDescription>
               </div>
               <span className="w-fit rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{game.status}</span>

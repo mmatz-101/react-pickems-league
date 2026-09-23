@@ -12,6 +12,20 @@ export type TeamRecord = {
 
 export type TeamRecords = Record<string, TeamRecord>;
 
+export type TeamGame = {
+  id: string;
+  date: string;
+  opponent: string;
+  isHome: boolean;
+  teamScore: number;
+  opponentScore: number;
+  spread: number;
+  result: "W" | "L" | "T";
+  atsResult: "W" | "L" | "P" | "—";
+};
+
+export type TeamGames = Record<string, TeamGame[]>;
+
 const completedStatuses = new Set(["FINAL", "FINAL OT", "COMPLETE"]);
 
 function emptyRecord(): TeamRecord {
@@ -67,6 +81,32 @@ export async function getTeamRecords(pb: PocketBase, seasonId: string, leagueId:
   }
 
   return records;
+}
+
+export async function getTeamGames(pb: PocketBase, seasonId: string, leagueId: string): Promise<TeamGames> {
+  const leagueGames = await pb.collection("league_games").getFullList<LeagueGameRecord>({
+    filter: `league="${leagueId}" && week.season="${seasonId}" && included=true`,
+    expand: "game",
+  });
+  const histories: TeamGames = {};
+
+  for (const leagueGame of leagueGames) {
+    const game = leagueGame.expand?.game;
+    if (!game || !completedStatuses.has(String(game.status).toUpperCase())) continue;
+    const add = (teamName: string, history: TeamGame) => {
+      (histories[teamName] ??= []).push(history);
+    };
+    const homeWon = game.home_score > game.away_score;
+    const tied = game.home_score === game.away_score;
+    const atsAvailable = Boolean(game.kickoff_spread_captured);
+    const homeATS = !atsAvailable ? "—" : game.home_score + game.kickoff_home_spread > game.away_score ? "W" : game.home_score + game.kickoff_home_spread < game.away_score ? "L" : "P";
+    const awayATS = !atsAvailable ? "—" : game.away_score + game.kickoff_away_spread > game.home_score ? "W" : game.away_score + game.kickoff_away_spread < game.home_score ? "L" : "P";
+    add(game.home_name, { id: game.id, date: game.date, opponent: game.away_name, isHome: true, teamScore: game.home_score, opponentScore: game.away_score, spread: game.kickoff_home_spread, result: tied ? "T" : homeWon ? "W" : "L", atsResult: homeATS });
+    add(game.away_name, { id: game.id, date: game.date, opponent: game.home_name, isHome: false, teamScore: game.away_score, opponentScore: game.home_score, spread: game.kickoff_away_spread, result: tied ? "T" : homeWon ? "L" : "W", atsResult: awayATS });
+  }
+
+  for (const games of Object.values(histories)) games.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return histories;
 }
 
 export function formatTeamRecord(record?: TeamRecord) {
