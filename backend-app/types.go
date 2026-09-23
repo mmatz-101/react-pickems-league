@@ -14,25 +14,28 @@ type GamesDataResponse struct {
 }
 
 type GameData struct {
-	ID           string  `json:"id"`
-	GameID       string  `json:"game_id"`
-	Date         string  `json:"date"`
-	Stadium      string  `json:"stadium"`
-	Status       string  `json:"status"`
-	HomeSpread   float32 `json:"home_spread"`
-	AwaySpread   float32 `json:"away_spread"`
-	HomeTeam     string  `json:"home_team"`
-	HomeName     string  `json:"home_name"`
-	AwayTeam     string  `json:"away_team"`
-	AwayName     string  `json:"away_name"`
-	HomeScore    int     `json:"home_score"`
-	AwayScore    int     `json:"away_score"`
-	League       string  `json:"league"`
-	Sport        string  `json:"sport"`
-	ProviderWeek int     `json:"provider_week"`
-	TvStation    string  `json:"tv_station"`
-	Week         int     `json:"week"`
-	PickWinner   string  `json:"pick_winner"`
+	ID                    string  `json:"id"`
+	GameID                string  `json:"game_id"`
+	Date                  string  `json:"date"`
+	Stadium               string  `json:"stadium"`
+	Status                string  `json:"status"`
+	HomeSpread            float32 `json:"home_spread"`
+	AwaySpread            float32 `json:"away_spread"`
+	KickoffHomeSpread     float32 `json:"kickoff_home_spread"`
+	KickoffAwaySpread     float32 `json:"kickoff_away_spread"`
+	KickoffSpreadCaptured bool    `json:"kickoff_spread_captured"`
+	HomeTeam              string  `json:"home_team"`
+	HomeName              string  `json:"home_name"`
+	AwayTeam              string  `json:"away_team"`
+	AwayName              string  `json:"away_name"`
+	HomeScore             int     `json:"home_score"`
+	AwayScore             int     `json:"away_score"`
+	League                string  `json:"league"`
+	Sport                 string  `json:"sport"`
+	ProviderWeek          int     `json:"provider_week"`
+	TvStation             string  `json:"tv_station"`
+	Week                  int     `json:"week"`
+	PickWinner            string  `json:"pick_winner"`
 }
 
 type GameDataRequestBody struct {

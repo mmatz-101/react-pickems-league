@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/pocketbase/dbx"
 	"github.com/pocketbase/pocketbase/core"
@@ -19,7 +20,7 @@ func GetGameData(gameID string) (*GameData, error) {
 		return nil, nil
 	}
 	record := records[0]
-	return &GameData{ID: record.Id, GameID: record.GetString("game_id"), Date: record.GetString("date"), Stadium: record.GetString("stadium"), Status: record.GetString("status"), HomeSpread: float32(record.GetFloat("home_spread")), AwaySpread: float32(record.GetFloat("away_spread")), HomeTeam: record.GetString("home_team"), HomeName: record.GetString("home_name"), AwayTeam: record.GetString("away_team"), AwayName: record.GetString("away_name"), HomeScore: record.GetInt("home_score"), AwayScore: record.GetInt("away_score"), League: record.GetString("league"), TvStation: record.GetString("tv_station"), Week: record.GetInt("week"), PickWinner: record.GetString("pick_winner")}, nil
+	return &GameData{ID: record.Id, GameID: record.GetString("game_id"), Date: record.GetString("date"), Stadium: record.GetString("stadium"), Status: record.GetString("status"), HomeSpread: float32(record.GetFloat("home_spread")), AwaySpread: float32(record.GetFloat("away_spread")), KickoffHomeSpread: float32(record.GetFloat("kickoff_home_spread")), KickoffAwaySpread: float32(record.GetFloat("kickoff_away_spread")), KickoffSpreadCaptured: record.GetBool("kickoff_spread_captured"), HomeTeam: record.GetString("home_team"), HomeName: record.GetString("home_name"), AwayTeam: record.GetString("away_team"), AwayName: record.GetString("away_name"), HomeScore: record.GetInt("home_score"), AwayScore: record.GetInt("away_score"), League: record.GetString("league"), TvStation: record.GetString("tv_station"), Week: record.GetInt("week"), PickWinner: record.GetString("pick_winner")}, nil
 }
 
 func UpdateGameData(game CoversGame, league string, week int, gameID string, homeSpread, awaySpread float32) error {
@@ -28,6 +29,7 @@ func UpdateGameData(game CoversGame, league string, week int, gameID string, hom
 		return err
 	}
 	applyGameRequest(record, gameRequestBody(game, league, week, homeSpread, awaySpread))
+	captureKickoffSpread(record, game.Status, game.StartDate, homeSpread, awaySpread)
 	return pocketbaseApp.Save(record)
 }
 
@@ -38,7 +40,29 @@ func CreateGameData(game CoversGame, league string, week int, homeSpread, awaySp
 	}
 	record := core.NewRecord(collection)
 	applyGameRequest(record, gameRequestBody(game, league, week, homeSpread, awaySpread))
+	captureKickoffSpread(record, game.Status, game.StartDate, homeSpread, awaySpread)
 	return pocketbaseApp.Save(record)
+}
+
+func captureKickoffSpread(record *core.Record, status, startDate string, homeSpread, awaySpread float32) {
+	if record.GetBool("kickoff_spread_captured") || homeSpread == 0 || awaySpread == 0 || !gameHasStarted(status, startDate) {
+		return
+	}
+	record.Set("kickoff_home_spread", homeSpread)
+	record.Set("kickoff_away_spread", awaySpread)
+	record.Set("kickoff_spread_captured", true)
+}
+
+func gameHasStarted(status, startDate string) bool {
+	if IsGameComplete(status) {
+		return true
+	}
+	trimmedStatus := strings.ToUpper(strings.TrimSpace(status))
+	if trimmedStatus == "IN PROGRESS" || trimmedStatus == "LIVE" {
+		return true
+	}
+	startedAt, err := time.Parse(time.RFC3339, startDate)
+	return err == nil && !time.Now().Before(startedAt)
 }
 
 func applyGameRequest(record *core.Record, body GameDataRequestBody) {
