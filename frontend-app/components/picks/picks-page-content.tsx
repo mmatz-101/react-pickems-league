@@ -17,7 +17,7 @@ export default async function PicksPageContent({ leagueSlug }: { leagueSlug?: st
   const { pb, league, season, week, leagueTeam } = await getLeagueContext(leagueSlug);
   const [leagueGames, teamRecords] = await Promise.all([
     pb.collection("league_games").getFullList({ filter: `week="${week.id}" && league="${league.id}" && included=true`, expand: "game,game.home_team,game.away_team", sort: "game.date" }),
-    getTeamRecords(pb, season.id),
+    getTeamRecords(pb, season.id, league.id),
   ]);
   const allGames = leagueGames.map((item) => item.expand?.game as gameTypeExpanded).filter((game) => game);
   const availableGames = allGames.filter((game) => game.status !== "FINAL" && game.status !== "FINAL OT" && new Date(game.date) > new Date());

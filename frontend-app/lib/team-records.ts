@@ -31,10 +31,21 @@ function addATS(record: TeamRecord, score: number, opponent: number, spread: num
   else record.atsPushes += 1;
 }
 
-export async function getTeamRecords(pb: PocketBase, seasonId: string): Promise<TeamRecords> {
-  const games = await pb.collection("games").getFullList<gameType>({
-    filter: `week_record.season="${seasonId}"`,
+type LeagueGameRecord = {
+  game: string;
+  included: boolean;
+  expand?: { game?: gameType };
+};
+
+export async function getTeamRecords(pb: PocketBase, seasonId: string, leagueId: string): Promise<TeamRecords> {
+  // Use league_games as the season schedule source. This follows the same
+  // relationship used by the picks page and avoids missing games whose
+  // generic games.week_record relation has not been repaired yet.
+  const leagueGames = await pb.collection("league_games").getFullList<LeagueGameRecord>({
+    filter: `league="${leagueId}" && week.season="${seasonId}" && included=true`,
+    expand: "game",
   });
+  const games = leagueGames.map((leagueGame) => leagueGame.expand?.game).filter((game): game is gameType => Boolean(game));
   const records: TeamRecords = {};
 
   for (const game of games) {
