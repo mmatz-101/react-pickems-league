@@ -26,6 +26,7 @@ import Image from "next/image";
 import { PickType } from "@/schema/submit-pick";
 import { ShieldQuestion } from "lucide-react";
 import { formatCentralTime } from "@/lib/utils";
+import { formatTeamATS, formatTeamRecord, TeamRecords } from "@/lib/team-records";
 
 export interface gameTypeExpanded extends gameType {
   expand: { home_team: teamType | null; away_team: teamType | null };
@@ -41,6 +42,7 @@ export default function GameCard({
   leagueTeam,
   leagueGame,
   weekRecord,
+  teamRecords,
   disabled = false,
 }: {
   game: gameTypeExpanded;
@@ -48,6 +50,7 @@ export default function GameCard({
   leagueTeam: string;
   leagueGame: string;
   weekRecord: string;
+  teamRecords: TeamRecords;
   disabled?: boolean;
 }) {
   const [homeTeamSelected, setHomeTeamSelected] = useState(false);
@@ -170,7 +173,8 @@ export default function GameCard({
               <p className="text-sm font-medium leading-none">
                 {game.away_name}
               </p>
-              <p className="text-sm text-muted-foreground">record</p>
+              <p className="text-xs text-muted-foreground">Record: {formatTeamRecord(teamRecords[game.away_name])}</p>
+              <p className="text-xs text-muted-foreground">ATS: {formatTeamATS(teamRecords[game.away_name])}</p>
             </div>
             <span>{game.away_spread === 0 ? "-" : game.away_spread}</span>
           </div>
@@ -194,7 +198,8 @@ export default function GameCard({
               <p className="text-sm font-medium leading-none">
                 @{game.home_name}
               </p>
-              <p className="text-sm text-muted-foreground">record</p>
+              <p className="text-xs text-muted-foreground">Record: {formatTeamRecord(teamRecords[game.home_name])}</p>
+              <p className="text-xs text-muted-foreground">ATS: {formatTeamATS(teamRecords[game.home_name])}</p>
             </div>
             <span>{game.home_spread === 0 ? "-" : game.home_spread}</span>
           </div>

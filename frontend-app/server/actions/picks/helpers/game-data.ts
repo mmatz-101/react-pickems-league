@@ -3,6 +3,9 @@ export type gameType = {
   away_team: teamType | null;
   away_score: number;
   away_spread: number;
+  kickoff_home_spread: number;
+  kickoff_away_spread: number;
+  kickoff_spread_captured: boolean;
   collectionId: string;
   collectionName: string;
   created: string;
