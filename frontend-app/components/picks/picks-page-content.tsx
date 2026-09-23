@@ -15,10 +15,11 @@ function PickProgress({ label, used, limit }: { label: string; used: number; lim
 
 export default async function PicksPageContent({ leagueSlug }: { leagueSlug?: string }) {
   const { pb, league, season, week, leagueTeam } = await getLeagueContext(leagueSlug);
-  const [leagueGames, teamRecords] = await Promise.all([
-    pb.collection("league_games").getFullList({ filter: `week="${week.id}" && league="${league.id}" && included=true`, expand: "game,game.home_team,game.away_team", sort: "game.date" }),
-    getTeamRecords(pb, season.id, league.id),
-  ]);
+  // Load the current week before the season-wide record query. Both requests
+  // target league_games, and PocketBase's default auto-cancellation can treat
+  // concurrent requests to the same endpoint as duplicates.
+  const leagueGames = await pb.collection("league_games").getFullList({ filter: `week="${week.id}" && league="${league.id}" && included=true`, expand: "game,game.home_team,game.away_team", sort: "game.date" });
+  const teamRecords = await getTeamRecords(pb, season.id, league.id);
   const allGames = leagueGames.map((item) => item.expand?.game as gameTypeExpanded).filter((game) => game);
   const availableGames = allGames.filter((game) => game.status !== "FINAL" && game.status !== "FINAL OT" && new Date(game.date) > new Date());
   const gamesNFLData = availableGames.filter((game) => game.sport === "NFL");
