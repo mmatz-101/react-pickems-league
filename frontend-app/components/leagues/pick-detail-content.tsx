@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { getLeagueContext } from "@/lib/league-context";
 import { formatCentralTime } from "@/lib/utils";
 import TeamHistory from "@/components/picks/team-history";
-import { getTeamGames } from "@/lib/team-records";
+import { getTeamGames, teamRecordKey } from "@/lib/team-records";
 import { ArrowLeft, CalendarDays, CheckCircle2, CircleDotDashed, Radio, Trophy } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -54,7 +54,7 @@ export default async function PickDetailContent({ id, leagueSlug }: { id: string
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div>
                 <CardDescription>{game.sport ?? game.league} · Week {pick.week}</CardDescription>
-                <CardTitle className="mt-1 text-2xl sm:text-3xl">{game.away_name} <span className="font-normal text-muted-foreground">at</span> {game.home_name}</CardTitle><div className="mt-2 flex gap-3"><TeamHistory teamName={game.away_name} games={teamGames[game.away_name]} /><TeamHistory teamName={game.home_name} games={teamGames[game.home_name]} /></div>
+                <CardTitle className="mt-1 text-2xl sm:text-3xl">{game.away_name} <span className="font-normal text-muted-foreground">at</span> {game.home_name}</CardTitle><div className="mt-2 flex gap-3"><TeamHistory teamName={game.away_name} games={teamGames[teamRecordKey(game.sport ?? game.league, game.away_name)]} /><TeamHistory teamName={game.home_name} games={teamGames[teamRecordKey(game.sport ?? game.league, game.home_name)]} /></div>
                 <CardDescription className="mt-2 flex items-center gap-1.5"><CalendarDays className="size-4" />{formatDate(game.date)}</CardDescription>
               </div>
               <span className="w-fit rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">{game.status}</span>

@@ -26,6 +26,10 @@ export type TeamGame = {
 
 export type TeamGames = Record<string, TeamGame[]>;
 
+export function teamRecordKey(sport: string | undefined, teamName: string) {
+  return `${sport ?? "unknown"}:${teamName}`;
+}
+
 const completedStatuses = new Set(["FINAL", "FINAL OT", "COMPLETE"]);
 
 function emptyRecord(): TeamRecord {
@@ -65,8 +69,10 @@ export async function getTeamRecords(pb: PocketBase, seasonId: string, leagueId:
   for (const game of games) {
     if (!completedStatuses.has(String(game.status).toUpperCase())) continue;
 
-    const home = records[game.home_name] ?? emptyRecord();
-    const away = records[game.away_name] ?? emptyRecord();
+    const homeKey = teamRecordKey(game.sport, game.home_name);
+    const awayKey = teamRecordKey(game.sport, game.away_name);
+    const home = records[homeKey] ?? emptyRecord();
+    const away = records[awayKey] ?? emptyRecord();
     addStraightUp(home, game.home_score, game.away_score);
     addStraightUp(away, game.away_score, game.home_score);
 
@@ -76,8 +82,8 @@ export async function getTeamRecords(pb: PocketBase, seasonId: string, leagueId:
       addATS(home, game.home_score, game.away_score, game.kickoff_home_spread);
       addATS(away, game.away_score, game.home_score, game.kickoff_away_spread);
     }
-    records[game.home_name] = home;
-    records[game.away_name] = away;
+    records[homeKey] = home;
+    records[awayKey] = away;
   }
 
   return records;
@@ -94,7 +100,7 @@ export async function getTeamGames(pb: PocketBase, seasonId: string, leagueId: s
     const game = leagueGame.expand?.game;
     if (!game || !completedStatuses.has(String(game.status).toUpperCase())) continue;
     const add = (teamName: string, history: TeamGame) => {
-      (histories[teamName] ??= []).push(history);
+      (histories[teamRecordKey(game.sport, teamName)] ??= []).push(history);
     };
     const homeWon = game.home_score > game.away_score;
     const tied = game.home_score === game.away_score;

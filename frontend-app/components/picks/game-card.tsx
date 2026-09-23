@@ -26,8 +26,15 @@ import Image from "next/image";
 import { PickType } from "@/schema/submit-pick";
 import { ShieldQuestion } from "lucide-react";
 import { formatCentralTime } from "@/lib/utils";
-import { formatTeamATS, formatTeamRecord, TeamGames, TeamRecords } from "@/lib/team-records";
+import { formatTeamATS, formatTeamRecord, teamRecordKey, TeamGames, TeamRecords } from "@/lib/team-records";
 import TeamHistory from "@/components/picks/team-history";
+
+function atsColor(record: TeamRecords[string] | undefined) {
+  if (!record) return "text-muted-foreground";
+  if (record.atsWins > record.atsLosses) return "text-emerald-600";
+  if (record.atsLosses > record.atsWins) return "text-red-600";
+  return "text-amber-600";
+}
 
 export interface gameTypeExpanded extends gameType {
   expand: { home_team: teamType | null; away_team: teamType | null };
@@ -176,9 +183,9 @@ export default function GameCard({
               <p className="text-sm font-medium leading-none">
                 {game.away_name}
               </p>
-              <p className="text-xs text-muted-foreground">Record: {formatTeamRecord(teamRecords[game.away_name])}</p>
-              <p className="text-xs text-muted-foreground">ATS: {formatTeamATS(teamRecords[game.away_name])}</p>
-              <TeamHistory teamName={game.away_name} games={teamGames[game.away_name]} />
+              <p className="text-xs text-muted-foreground">Record: {formatTeamRecord(teamRecords[teamRecordKey(game.sport, game.away_name)])}</p>
+              <p className={`text-xs ${atsColor(teamRecords[teamRecordKey(game.sport, game.away_name)])}`}>ATS: {formatTeamATS(teamRecords[teamRecordKey(game.sport, game.away_name)])}</p>
+              <TeamHistory teamName={game.away_name} games={teamGames[teamRecordKey(game.sport, game.away_name)]} />
             </div>
             <span>{game.away_spread === 0 ? "-" : game.away_spread}</span>
           </div>
@@ -202,9 +209,9 @@ export default function GameCard({
               <p className="text-sm font-medium leading-none">
                 @{game.home_name}
               </p>
-              <p className="text-xs text-muted-foreground">Record: {formatTeamRecord(teamRecords[game.home_name])}</p>
-              <p className="text-xs text-muted-foreground">ATS: {formatTeamATS(teamRecords[game.home_name])}</p>
-              <TeamHistory teamName={game.home_name} games={teamGames[game.home_name]} />
+              <p className="text-xs text-muted-foreground">Record: {formatTeamRecord(teamRecords[teamRecordKey(game.sport, game.home_name)])}</p>
+              <p className={`text-xs ${atsColor(teamRecords[teamRecordKey(game.sport, game.home_name)])}`}>ATS: {formatTeamATS(teamRecords[teamRecordKey(game.sport, game.home_name)])}</p>
+              <TeamHistory teamName={game.home_name} games={teamGames[teamRecordKey(game.sport, game.home_name)]} />
             </div>
             <span>{game.home_spread === 0 ? "-" : game.home_spread}</span>
           </div>
